@@ -197,23 +197,23 @@ ORDER BY social_score DESC;
 -- ADDITIONAL PERFORMANCE INDEXES
 -- =====================================================
 
--- Composite indexes for common queries
-CREATE INDEX idx_events_status_start ON Events(status, start_time);
-CREATE INDEX idx_events_category_status ON Events(category_id, status);
-CREATE INDEX idx_bookings_user_status ON Bookings(user_id, status);
-CREATE INDEX idx_bookings_event_status ON Bookings(event_id, status);
-CREATE INDEX idx_bookings_created_status ON Bookings(created_at, status);
+-- Composite indexes for common queries (some may already exist in schema)
+-- CREATE INDEX idx_events_status_start ON Events(status, start_time);
+-- CREATE INDEX idx_events_category_status ON Events(category_id, status);
+-- CREATE INDEX idx_bookings_user_status ON Bookings(user_id, status);
+-- CREATE INDEX idx_bookings_event_status ON Bookings(event_id, status);
+-- CREATE INDEX idx_bookings_created_status ON Bookings(created_at, status);
 
 -- Covering indexes for specific queries
-CREATE INDEX idx_tickettypes_event_price ON TicketTypes(event_id, price, quantity, sold_count);
-CREATE INDEX idx_sponsors_event_status ON Sponsors(event_id, status, contribution_amount);
-CREATE INDEX idx_messages_conversation_read ON Messages(sender_id, receiver_id, is_read, created_at);
-CREATE INDEX idx_notifications_user_read ON Notifications(user_id, is_read, created_at);
+-- CREATE INDEX idx_tickettypes_event_price ON TicketTypes(event_id, price, quantity, sold_count);
+-- CREATE INDEX idx_sponsors_event_status ON Sponsors(event_id, status, contribution_amount);
+-- CREATE INDEX idx_messages_conversation_read ON Messages(sender_id, receiver_id, is_read, created_at);
+-- CREATE INDEX idx_notifications_user_read ON Notifications(user_id, is_read, created_at);
 
--- Partial indexes for filtered queries
-CREATE INDEX idx_active_bookings ON Bookings(event_id, user_id) WHERE status = 'VALID';
-CREATE INDEX idx_published_events ON Events(start_time, category_id) WHERE status = 'PUBLISHED';
-CREATE INDEX idx_accepted_friends ON Friendships(user_id, friend_id) WHERE status = 'ACCEPTED';
+-- Partial indexes for filtered queries (MySQL 8.0.13+ feature - commented out for compatibility)
+-- CREATE INDEX idx_active_bookings ON Bookings(event_id, user_id) WHERE status = 'VALID';
+-- CREATE INDEX idx_published_events ON Events(start_time, category_id) WHERE status = 'PUBLISHED';
+-- CREATE INDEX idx_accepted_friends ON Friendships(user_id, friend_id) WHERE status = 'ACCEPTED';
 
 -- =====================================================
 -- VIEWS & INDEXES CREATED SUCCESSFULLY

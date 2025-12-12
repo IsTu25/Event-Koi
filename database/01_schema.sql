@@ -71,8 +71,7 @@ CREATE TABLE Venues (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
     INDEX idx_city (city),
-    INDEX idx_capacity (capacity),
-    SPATIAL INDEX idx_location (latitude, longitude)
+    INDEX idx_capacity (capacity)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================================
