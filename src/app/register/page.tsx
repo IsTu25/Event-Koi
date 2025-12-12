@@ -2,13 +2,11 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function RegisterPage() {
     const router = useRouter();
 
-    // For simplicity, we manage separate states or a combined object. 
-    // Since we have files, a single object with specific types is fine, or individual states.
-    // Let's use a flexible state approach.
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -18,17 +16,16 @@ export default function RegisterPage() {
 
     const [profileImage, setProfileImage] = useState<File | null>(null);
     const [idCard, setIdCard] = useState<File | null>(null);
-    const [proofDoc, setProofDoc] = useState<File | null>(null);
 
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [step, setStep] = useState(1);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
         setLoading(true);
 
-        // Validation
         if (!name || !email || !password || !designation || !profileImage) {
             setError('Please fill in all required fields (Name, Email, Password, Designation, Profile Photo)');
             setLoading(false);
@@ -46,11 +43,9 @@ export default function RegisterPage() {
 
             if (profileImage) formData.append('profile_image', profileImage);
             if (idCard) formData.append('organization_id_card', idCard);
-            if (proofDoc) formData.append('proof_document', proofDoc);
 
             const res = await fetch('/api/auth/register', {
                 method: 'POST',
-                // Do NOT set Content-Type header when using FormData; browser does it
                 body: formData,
             });
 
@@ -60,7 +55,6 @@ export default function RegisterPage() {
                 throw new Error(data.message || 'Something went wrong');
             }
 
-            // Redirect to login on success
             router.push('/login?registered=true');
         } catch (err: any) {
             setError(err.message);
@@ -69,79 +63,239 @@ export default function RegisterPage() {
         }
     };
 
+    const nextStep = () => {
+        if (step === 1 && (!name || !email || !password)) {
+            setError('Please fill in all fields');
+            return;
+        }
+        setError('');
+        setStep(2);
+    };
+
     return (
-        <div className="flex min-h-screen items-center justify-center bg-black p-4 text-white">
-            <div className="w-full max-w-2xl rounded-2xl bg-zinc-900 p-8 shadow-xl border border-zinc-800">
-                <h1 className="mb-2 text-3xl font-bold text-center bg-gradient-to-r from-pink-500 to-indigo-500 bg-clip-text text-transparent">
-                    Join Event Koi
-                </h1>
-                <p className="mb-8 text-center text-zinc-400">Complete your profile to sign up</p>
+        <div className="relative min-h-screen animated-gradient-bg text-white overflow-hidden">
+            {/* Floating Orbs */}
+            <div className="floating-orb orb-1" />
+            <div className="floating-orb orb-2" />
+            <div className="floating-orb orb-3" />
 
-                {error && (
-                    <div className="mb-4 rounded-lg bg-red-500/10 p-3 text-sm text-red-500 border border-red-500/20">
-                        {error}
-                    </div>
-                )}
+            {/* Particles */}
+            <div className="particles">
+                {[...Array(15)].map((_, i) => (
+                    <div
+                        key={i}
+                        className="particle"
+                        style={{
+                            left: `${Math.random() * 100}%`,
+                            animationDelay: `${Math.random() * 15}s`,
+                            animationDuration: `${15 + Math.random() * 10}s`,
+                        }}
+                    />
+                ))}
+            </div>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-4">
-                            <div>
-                                <label className="mb-1 block text-sm font-medium text-zinc-400">Full Name *</label>
-                                <input type="text" required className="w-full rounded-lg bg-zinc-800 p-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" value={name} onChange={e => setName(e.target.value)} />
-                            </div>
-                            <div>
-                                <label className="mb-1 block text-sm font-medium text-zinc-400">Email Address *</label>
-                                <input type="email" required className="w-full rounded-lg bg-zinc-800 p-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" value={email} onChange={e => setEmail(e.target.value)} />
-                            </div>
-                            <div>
-                                <label className="mb-1 block text-sm font-medium text-zinc-400">Password *</label>
-                                <input type="password" required className="w-full rounded-lg bg-zinc-800 p-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" value={password} onChange={e => setPassword(e.target.value)} />
-                            </div>
-                            <div>
-                                <label className="mb-1 block text-sm font-medium text-zinc-400">Phone</label>
-                                <input type="tel" className="w-full rounded-lg bg-zinc-800 p-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" value={phone} onChange={e => setPhone(e.target.value)} />
-                            </div>
-                        </div>
+            <div className="relative z-10 flex min-h-screen items-center justify-center p-6 py-12">
+                <div className="w-full max-w-2xl">
+                    {/* Logo */}
+                    <Link href="/" className="block text-center mb-8">
+                        <h1 className="text-4xl font-black text-gradient-glow">Event Koi</h1>
+                    </Link>
 
-                        <div className="space-y-4">
-                            <div>
-                                <label className="mb-1 block text-sm font-medium text-zinc-400">Role</label>
-                                <select className="w-full rounded-lg bg-zinc-800 p-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" value={role} onChange={e => setRole(e.target.value)}>
-                                    <option value="attendee">Attendee</option>
-                                    <option value="organizer">Organizer</option>
-                                </select>
+                    {/* Progress Indicator */}
+                    <div className="flex items-center justify-center mb-8">
+                        <div className="flex items-center gap-4">
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all ${step >= 1 ? 'gradient-btn' : 'glass'}`}>
+                                1
                             </div>
-                            <div>
-                                <label className="mb-1 block text-sm font-medium text-zinc-400">Designation / Job Title *</label>
-                                <input type="text" required className="w-full rounded-lg bg-zinc-800 p-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="e.g. Student, Manager" value={designation} onChange={e => setDesignation(e.target.value)} />
-                            </div>
-                            <div>
-                                <label className="mb-1 block text-sm font-medium text-zinc-400">Profile Picture *</label>
-                                <input type="file" accept="image/*" required onChange={(e) => e.target.files && setProfileImage(e.target.files[0])} className="w-full text-sm text-zinc-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-zinc-800 file:text-white hover:file:bg-zinc-700" />
-                            </div>
-                            <div>
-                                <label className="mb-1 block text-sm font-medium text-zinc-400">Org ID / Proof (Optional)</label>
-                                <input type="file" accept="image/*,.pdf" onChange={(e) => e.target.files && setIdCard(e.target.files[0])} className="w-full text-sm text-zinc-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-zinc-800 file:text-white hover:file:bg-zinc-700" />
+                            <div className={`w-20 h-1 rounded-full transition-all ${step >= 2 ? 'bg-gradient-to-r from-pink-500 to-purple-500' : 'bg-white/10'}`} />
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all ${step >= 2 ? 'gradient-btn' : 'glass'}`}>
+                                2
                             </div>
                         </div>
                     </div>
 
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="mt-6 w-full rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 p-3 font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
-                    >
-                        {loading ? 'Submitting & Creating Account...' : 'Sign Up'}
-                    </button>
-                </form>
+                    {/* Register Card */}
+                    <div className="glass-strong rounded-3xl p-8 shadow-2xl">
+                        <div className="text-center mb-8">
+                            <h2 className="text-3xl font-bold text-white mb-2">
+                                {step === 1 ? 'Create Your Account' : 'Complete Your Profile'}
+                            </h2>
+                            <p className="text-gray-400">
+                                {step === 1 ? 'Join the Event Koi community' : 'Just a few more details'}
+                            </p>
+                        </div>
 
-                <p className="mt-6 text-center text-sm text-zinc-500">
-                    Already have an account?{' '}
-                    <a href="/login" className="text-indigo-400 hover:text-indigo-300">
-                        Log in
-                    </a>
-                </p>
+                        {error && (
+                            <div className="mb-6 rounded-xl bg-red-500/10 p-4 text-sm text-red-400 border border-red-500/20 text-center flex items-center justify-center gap-2">
+                                <span className="text-lg">⚠️</span>
+                                <span>{error}</span>
+                            </div>
+                        )}
+
+                        <form onSubmit={handleSubmit} className="space-y-5">
+                            {step === 1 && (
+                                <>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-400 mb-2">Full Name *</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            className="premium-input w-full"
+                                            placeholder="John Doe"
+                                            value={name}
+                                            onChange={e => setName(e.target.value)}
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-400 mb-2">Email Address *</label>
+                                        <input
+                                            type="email"
+                                            required
+                                            className="premium-input w-full"
+                                            placeholder="you@example.com"
+                                            value={email}
+                                            onChange={e => setEmail(e.target.value)}
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-400 mb-2">Password *</label>
+                                        <input
+                                            type="password"
+                                            required
+                                            className="premium-input w-full"
+                                            placeholder="••••••••"
+                                            value={password}
+                                            onChange={e => setPassword(e.target.value)}
+                                        />
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        onClick={nextStep}
+                                        className="w-full gradient-btn py-4 rounded-xl font-bold text-white text-lg mt-6"
+                                    >
+                                        Continue →
+                                    </button>
+                                </>
+                            )}
+
+                            {step === 2 && (
+                                <>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-400 mb-2">Phone Number</label>
+                                            <input
+                                                type="tel"
+                                                className="premium-input w-full"
+                                                placeholder="+880 1234 567890"
+                                                value={phone}
+                                                onChange={e => setPhone(e.target.value)}
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-400 mb-2">I am a...</label>
+                                            <select
+                                                className="premium-input w-full"
+                                                value={role}
+                                                onChange={e => setRole(e.target.value)}
+                                            >
+                                                <option value="attendee">Attendee</option>
+                                                <option value="organizer">Organizer</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-400 mb-2">Designation / Job Title *</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            className="premium-input w-full"
+                                            placeholder="e.g. Student, Software Engineer, Manager"
+                                            value={designation}
+                                            onChange={e => setDesignation(e.target.value)}
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-400 mb-2">Profile Picture *</label>
+                                        <div className="relative">
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                required
+                                                onChange={(e) => e.target.files && setProfileImage(e.target.files[0])}
+                                                className="w-full text-sm text-gray-400"
+                                            />
+                                            {profileImage && (
+                                                <span className="text-green-400 text-sm mt-2 block">✓ {profileImage.name}</span>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-400 mb-2">Organization ID / Proof (Optional)</label>
+                                        <input
+                                            type="file"
+                                            accept="image/*,.pdf"
+                                            onChange={(e) => e.target.files && setIdCard(e.target.files[0])}
+                                            className="w-full text-sm text-gray-400"
+                                        />
+                                        {idCard && (
+                                            <span className="text-green-400 text-sm mt-2 block">✓ {idCard.name}</span>
+                                        )}
+                                    </div>
+
+                                    <div className="flex gap-4 mt-6">
+                                        <button
+                                            type="button"
+                                            onClick={() => setStep(1)}
+                                            className="flex-1 glass py-4 rounded-xl font-bold text-white text-lg hover:bg-white/10 transition-colors"
+                                        >
+                                            ← Back
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            disabled={loading}
+                                            className="flex-1 gradient-btn py-4 rounded-xl font-bold text-white text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            {loading ? (
+                                                <span className="flex items-center justify-center gap-2">
+                                                    <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24">
+                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                                    </svg>
+                                                    Creating...
+                                                </span>
+                                            ) : (
+                                                'Create Account'
+                                            )}
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                        </form>
+
+                        <div className="mt-8 pt-6 border-t border-white/10 text-center">
+                            <p className="text-gray-400">
+                                Already have an account?{' '}
+                                <Link href="/login" className="text-gradient font-semibold hover:underline">
+                                    Sign in
+                                </Link>
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Back to home */}
+                    <div className="mt-8 text-center">
+                        <Link href="/" className="text-gray-500 hover:text-white transition-colors text-sm">
+                            ← Back to Home
+                        </Link>
+                    </div>
+                </div>
             </div>
         </div>
     );

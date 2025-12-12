@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function CreateEvent() {
     const router = useRouter();
@@ -17,7 +18,7 @@ export default function CreateEvent() {
         end_time: '',
         venue_id: '',
         category_id: '',
-        status: 'PUBLISHED' // Default to published for now
+        status: 'PUBLISHED'
     });
 
     useEffect(() => {
@@ -27,8 +28,6 @@ export default function CreateEvent() {
             return;
         }
         setUser(JSON.parse(storedUser));
-
-        // Fetch options
         fetchVenuesAndCategories();
     }, [router]);
 
@@ -59,7 +58,7 @@ export default function CreateEvent() {
                     ...formData,
                     organizer_id: user.id || user.userId || (user as any).insertId,
                     listing_fee: 1000.00,
-                    payment_confirmed: true // In production this would come from stripe/payment provider
+                    payment_confirmed: true
                 })
             });
 
@@ -76,151 +75,217 @@ export default function CreateEvent() {
     if (!user) return null;
 
     return (
-        <div className="min-h-screen bg-black text-white p-8">
-            <div className="max-w-3xl mx-auto">
-                <header className="mb-12 border-b border-white/10 pb-6">
-                    <button
-                        onClick={() => router.back()}
-                        className="text-zinc-400 hover:text-white mb-4 flex items-center gap-2"
+        <div className="relative min-h-screen animated-gradient-bg text-white">
+            {/* Floating Orbs */}
+            <div className="floating-orb orb-1 opacity-30" />
+            <div className="floating-orb orb-2 opacity-30" />
+
+            <div className="relative z-10 max-w-4xl mx-auto p-6 lg:p-8">
+                {/* Header */}
+                <header className="mb-8">
+                    <Link
+                        href="/dashboard"
+                        className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-6"
                     >
-                        ← Back to Dashboard
-                    </button>
-                    <h1 className="text-3xl font-bold bg-gradient-to-r from-pink-500 to-indigo-500 bg-clip-text text-transparent">
-                        Create New Event
-                    </h1>
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                        Back to Dashboard
+                    </Link>
+
+                    <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center text-2xl shadow-lg shadow-pink-500/30">
+                            ✨
+                        </div>
+                        <div>
+                            <h1 className="text-4xl font-black text-gradient-glow">Create New Event</h1>
+                            <p className="text-gray-400 mt-1">Fill in the details to publish your event</p>
+                        </div>
+                    </div>
                 </header>
 
-                <form onSubmit={handleSubmit} className="space-y-6 bg-zinc-900 p-8 rounded-2xl border border-zinc-800">
-                    <div>
-                        <label className="block text-sm font-medium text-zinc-400 mb-2">Event Title</label>
-                        <input
-                            type="text"
-                            required
-                            className="w-full bg-black border border-zinc-800 rounded-lg p-3 text-white focus:outline-none focus:border-pink-500 transition-colors"
-                            value={formData.title}
-                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-zinc-400 mb-2">Description</label>
-                        <textarea
-                            className="w-full bg-black border border-zinc-800 rounded-lg p-3 text-white focus:outline-none focus:border-pink-500 transition-colors h-32"
-                            value={formData.description}
-                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                        />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label className="block text-sm font-medium text-zinc-400 mb-2">Start Time</label>
-                            <input
-                                type="datetime-local"
-                                required
-                                className="w-full bg-black border border-zinc-800 rounded-lg p-3 text-white focus:outline-none focus:border-pink-500 transition-colors dark-calendar"
-                                value={formData.start_time}
-                                onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
-                            />
+                {/* Form */}
+                <form onSubmit={handleSubmit} className="space-y-8">
+                    {/* Event Details Card */}
+                    <div className="glass-strong rounded-3xl p-8">
+                        <div className="flex items-center gap-3 mb-8">
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center text-lg">
+                                📝
+                            </div>
+                            <h2 className="text-xl font-bold text-white">Event Details</h2>
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-zinc-400 mb-2">End Time</label>
-                            <input
-                                type="datetime-local"
-                                required
-                                className="w-full bg-black border border-zinc-800 rounded-lg p-3 text-white focus:outline-none focus:border-pink-500 transition-colors dark-calendar"
-                                value={formData.end_time}
-                                onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
-                            />
-                        </div>
-                    </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label className="block text-sm font-medium text-zinc-400 mb-2">Venue</label>
-                            <select
-                                className="w-full bg-black border border-zinc-800 rounded-lg p-3 text-white focus:outline-none focus:border-pink-500 transition-colors"
-                                value={formData.venue_id}
-                                onChange={(e) => setFormData({ ...formData, venue_id: e.target.value })}
-                            >
-                                <option value="">Select a Venue (Optional)</option>
-                                {venues.map((v: any) => (
-                                    <option key={v.venue_id} value={v.venue_id}>{v.name}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-zinc-400 mb-2">Category</label>
-                            <select
-                                className="w-full bg-black border border-zinc-800 rounded-lg p-3 text-white focus:outline-none focus:border-pink-500 transition-colors"
-                                value={formData.category_id}
-                                onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
-                            >
-                                <option value="">Select a Category (Optional)</option>
-                                {categories.map((c: any) => (
-                                    <option key={c.category_id} value={c.category_id}>{c.name}</option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
-
-                    {/* Payment Section for Organizer */}
-                    <div className="border-t border-zinc-800 pt-8 mt-8">
-                        <div className="flex justify-between items-center mb-6">
+                        <div className="space-y-6">
                             <div>
-                                <h3 className="text-xl font-bold text-white">Listing Fee Payment</h3>
-                                <p className="text-sm text-zinc-500">Pay the platform fee to publish your event</p>
+                                <label className="block text-sm font-medium text-gray-400 mb-2">Event Title *</label>
+                                <input
+                                    type="text"
+                                    required
+                                    className="premium-input w-full text-lg"
+                                    placeholder="Give your event an exciting name"
+                                    value={formData.title}
+                                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-400 mb-2">Description</label>
+                                <textarea
+                                    className="premium-input w-full h-32 resize-none"
+                                    placeholder="Tell people what your event is about..."
+                                    value={formData.description}
+                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-400 mb-2">Start Date & Time *</label>
+                                    <input
+                                        type="datetime-local"
+                                        required
+                                        className="premium-input w-full dark-calendar"
+                                        value={formData.start_time}
+                                        onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-400 mb-2">End Date & Time *</label>
+                                    <input
+                                        type="datetime-local"
+                                        required
+                                        className="premium-input w-full dark-calendar"
+                                        value={formData.end_time}
+                                        onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-400 mb-2">Venue</label>
+                                    <select
+                                        className="premium-input w-full"
+                                        value={formData.venue_id}
+                                        onChange={(e) => setFormData({ ...formData, venue_id: e.target.value })}
+                                    >
+                                        <option value="">Select a Venue (Optional)</option>
+                                        {venues.map((v: any) => (
+                                            <option key={v.venue_id} value={v.venue_id}>{v.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-400 mb-2">Category</label>
+                                    <select
+                                        className="premium-input w-full"
+                                        value={formData.category_id}
+                                        onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
+                                    >
+                                        <option value="">Select a Category (Optional)</option>
+                                        {categories.map((c: any) => (
+                                            <option key={c.category_id} value={c.category_id}>{c.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Payment Card */}
+                    <div className="glass-strong rounded-3xl p-8">
+                        <div className="flex items-center justify-between mb-8">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-lg">
+                                    💳
+                                </div>
+                                <div>
+                                    <h2 className="text-xl font-bold text-white">Listing Fee Payment</h2>
+                                    <p className="text-sm text-gray-400">Pay to publish your event</p>
+                                </div>
                             </div>
                             <div className="text-right">
-                                <span className="text-2xl font-bold text-white">৳1,000.00</span>
-                                <span className="block text-xs text-zinc-500">One-time fee</span>
+                                <span className="text-3xl font-black text-gradient">৳1,000</span>
+                                <span className="block text-xs text-gray-500">One-time fee</span>
                             </div>
                         </div>
 
-                        <div className="bg-black border border-zinc-800 rounded-xl p-6 relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                                <svg className="w-24 h-24 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M2 10h20v2H2zm0-2V6c0-1.103.897-2 2-2h16c1.103 0 2 .897 2 2v2H2zm0 12v-8h20v8c0 1.103-.897 2-2 2H4c-1.103 0-2-.897-2-2z" /></svg>
+                        <div className="premium-card p-6 shimmer">
+                            <div className="absolute top-4 right-4 opacity-10">
+                                <svg className="w-20 h-20 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M2 10h20v2H2zm0-2V6c0-1.103.897-2 2-2h16c1.103 0 2 .897 2 2v2H2zm0 12v-8h20v8c0 1.103-.897 2-2 2H4c-1.103 0-2-.897-2-2z" />
+                                </svg>
                             </div>
 
-                            <div className="grid grid-cols-1 gap-4 relative z-10">
+                            <div className="relative z-10 space-y-5">
                                 <div>
-                                    <label className="block text-xs font-medium text-zinc-500 mb-1 uppercase tracking-wider">Card Number</label>
-                                    <input type="text" placeholder="0000 0000 0000 0000" className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-3 text-white focus:outline-none focus:border-pink-500 font-mono tracking-widest placeholder-zinc-700" />
+                                    <label className="block text-xs font-medium text-gray-500 mb-2 uppercase tracking-wider">Card Number</label>
+                                    <input
+                                        type="text"
+                                        placeholder="0000 0000 0000 0000"
+                                        className="premium-input w-full font-mono tracking-widest"
+                                    />
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-2 gap-5">
                                     <div>
-                                        <label className="block text-xs font-medium text-zinc-500 mb-1 uppercase tracking-wider">Expiry</label>
-                                        <input type="text" placeholder="MM/YY" className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-3 text-white focus:outline-none focus:border-pink-500 font-mono text-center placeholder-zinc-700" />
+                                        <label className="block text-xs font-medium text-gray-500 mb-2 uppercase tracking-wider">Expiry</label>
+                                        <input
+                                            type="text"
+                                            placeholder="MM/YY"
+                                            className="premium-input w-full font-mono text-center"
+                                        />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-medium text-zinc-500 mb-1 uppercase tracking-wider">CVC</label>
-                                        <input type="text" placeholder="123" className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-3 text-white focus:outline-none focus:border-pink-500 font-mono text-center placeholder-zinc-700" />
+                                        <label className="block text-xs font-medium text-gray-500 mb-2 uppercase tracking-wider">CVC</label>
+                                        <input
+                                            type="text"
+                                            placeholder="123"
+                                            className="premium-input w-full font-mono text-center"
+                                        />
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-medium text-zinc-500 mb-1 uppercase tracking-wider">Cardholder Name</label>
-                                    <input type="text" placeholder="JOHN DOE" className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-3 text-white focus:outline-none focus:border-pink-500 uppercase placeholder-zinc-700" />
+                                    <label className="block text-xs font-medium text-gray-500 mb-2 uppercase tracking-wider">Cardholder Name</label>
+                                    <input
+                                        type="text"
+                                        placeholder="JOHN DOE"
+                                        className="premium-input w-full uppercase"
+                                    />
                                 </div>
                             </div>
                         </div>
+
+                        <div className="mt-6 flex items-center gap-3 text-sm text-gray-400">
+                            <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                            </svg>
+                            <span>Your payment is secure and encrypted</span>
+                        </div>
                     </div>
 
-                    <div className="pt-6">
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="w-full bg-gradient-to-r from-pink-500 to-indigo-500 text-white font-bold py-3 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
-                        >
-                            {loading ? 'Creating...' : 'Create Event'}
-                        </button>
-                    </div>
+                    {/* Submit Button */}
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full gradient-btn py-5 rounded-2xl text-xl font-bold disabled:opacity-50 flex items-center justify-center gap-3"
+                    >
+                        {loading ? (
+                            <>
+                                <svg className="animate-spin w-6 h-6" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                </svg>
+                                Creating Event...
+                            </>
+                        ) : (
+                            <>
+                                <span>🚀</span>
+                                Create & Publish Event
+                            </>
+                        )}
+                    </button>
                 </form>
             </div>
-            <style jsx global>{`
-                .dark-calendar::-webkit-calendar-picker-indicator {
-                    filter: invert(1);
-                    cursor: pointer;
-                }
-            `}</style>
         </div>
     );
 }

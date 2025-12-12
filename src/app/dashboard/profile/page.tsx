@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function ProfilePage() {
     const router = useRouter();
@@ -10,7 +11,6 @@ export default function ProfilePage() {
     const [uploading, setUploading] = useState(false);
     const [activeChat, setActiveChat] = useState<any>(null);
 
-    // Form states
     const [formData, setFormData] = useState({
         designation: '',
         profile_image: null as File | null,
@@ -25,7 +25,6 @@ export default function ProfilePage() {
             return;
         }
         const parsed = JSON.parse(storedUser);
-        // Fetch fresh profile data
         fetchData(parsed.id || parsed.userId || parsed.insertId);
     }, [router]);
 
@@ -83,114 +82,187 @@ export default function ProfilePage() {
         }
     };
 
-    if (loading) return <div className="min-h-screen bg-black text-white p-8">Loading...</div>;
+    if (loading) {
+        return (
+            <div className="min-h-screen animated-gradient-bg flex items-center justify-center">
+                <div className="text-center">
+                    <div className="w-16 h-16 border-4 border-pink-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                    <p className="text-white text-lg">Loading profile...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
-        <div className="min-h-screen bg-black text-white p-8">
-            <div className="max-w-4xl mx-auto">
-                <header className="mb-12 border-b border-white/10 pb-6">
-                    <button
-                        onClick={() => router.push('/dashboard')}
-                        className="text-zinc-400 hover:text-white mb-2 flex items-center gap-2"
+        <div className="relative min-h-screen animated-gradient-bg text-white">
+            {/* Floating Orbs */}
+            <div className="floating-orb orb-1 opacity-30" />
+            <div className="floating-orb orb-2 opacity-30" />
+
+            <div className="relative z-10 max-w-6xl mx-auto p-6 lg:p-8">
+                {/* Header */}
+                <header className="mb-8">
+                    <Link
+                        href="/dashboard"
+                        className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-6"
                     >
-                        ← Back to Dashboard
-                    </button>
-                    <div className="flex justify-between items-end">
-                        <h1 className="text-3xl font-bold bg-gradient-to-r from-pink-500 to-indigo-500 bg-clip-text text-transparent">
-                            My Profile
-                        </h1>
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                        Back to Dashboard
+                    </Link>
+
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+                        <div>
+                            <h1 className="text-4xl font-black text-gradient-glow">My Profile</h1>
+                            <p className="text-gray-400 mt-2">Manage your account and verification</p>
+                        </div>
                         <div className="flex gap-6">
-                            <div className="text-center">
-                                <span className="block text-2xl font-bold text-white">{user.events_organized || 0}</span>
-                                <span className="text-xs text-zinc-500 uppercase tracking-wider">Organized</span>
+                            <div className="text-center glass rounded-2xl px-6 py-4">
+                                <span className="block text-3xl font-bold text-gradient">{user?.events_organized || 0}</span>
+                                <span className="text-xs text-gray-400 uppercase tracking-wider">Organized</span>
                             </div>
-                            <div className="text-center">
-                                <span className="block text-2xl font-bold text-white">{user.events_attended || 0}</span>
-                                <span className="text-xs text-zinc-500 uppercase tracking-wider">Attended</span>
+                            <div className="text-center glass rounded-2xl px-6 py-4">
+                                <span className="block text-3xl font-bold text-gradient">{user?.events_attended || 0}</span>
+                                <span className="text-xs text-gray-400 uppercase tracking-wider">Attended</span>
                             </div>
                         </div>
                     </div>
                 </header>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Profile Card */}
-                    <div className="col-span-1">
-                        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 text-center">
-                            <div className="w-32 h-32 mx-auto rounded-full bg-zinc-800 mb-4 overflow-hidden border-2 border-zinc-700">
-                                {user.profile_image ? (
-                                    <img src={user.profile_image} alt="Profile" className="w-full h-full object-cover" />
-                                ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-4xl">👤</div>
+                    <div className="lg:col-span-1">
+                        <div className="glass-strong rounded-3xl p-8 text-center sticky top-8">
+                            {/* Avatar */}
+                            <div className="relative inline-block mb-6">
+                                <div className="w-32 h-32 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 p-1">
+                                    <div className="w-full h-full rounded-full bg-black overflow-hidden flex items-center justify-center">
+                                        {user?.profile_image ? (
+                                            <img src={user.profile_image} alt="Profile" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <span className="text-4xl">👤</span>
+                                        )}
+                                    </div>
+                                </div>
+                                {user?.is_verified && (
+                                    <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-lg shadow-lg">
+                                        ✓
+                                    </div>
                                 )}
                             </div>
-                            <h2 className="text-xl font-bold text-white">{user.name}</h2>
-                            <p className="text-zinc-400 text-sm mb-2">{user.email}</p>
-                            <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium mb-4 ${user.is_verified ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-500'}`}>
-                                {user.is_verified ? '✅ Verified User' : '⚠️ Not Verified'}
+
+                            <h2 className="text-2xl font-bold text-white mb-1">{user?.name}</h2>
+                            <p className="text-gray-400 text-sm mb-4">{user?.email}</p>
+
+                            <span className={`inline-block px-4 py-2 rounded-full text-sm font-semibold mb-6 ${user?.is_verified ? 'badge-success' : 'badge-warning'}`}>
+                                {user?.is_verified ? '✅ Verified User' : '⚠️ Not Verified'}
                             </span>
 
-                            <div className="text-left mt-6 pt-6 border-t border-zinc-800 space-y-3">
-                                <p className="text-sm text-zinc-500">Role: <span className="text-white capitalize">{user.role}</span></p>
-                                <p className="text-sm text-zinc-500">Phone: <span className="text-white">{user.phone || 'N/A'}</span></p>
-                                <p className="text-sm text-zinc-500">Designation: <span className="text-white">{user.designation || 'N/A'}</span></p>
+                            <div className="text-left space-y-4 pt-6 border-t border-white/10">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-gray-400 text-sm">Role</span>
+                                    <span className="badge-primary capitalize">{user?.role}</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-gray-400 text-sm">Phone</span>
+                                    <span className="text-white font-medium">{user?.phone || 'N/A'}</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-gray-400 text-sm">Designation</span>
+                                    <span className="text-white font-medium">{user?.designation || 'N/A'}</span>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* Edit Form */}
-                    <div className="col-span-2">
-                        <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-8">
-                            <h3 className="text-xl font-bold text-white mb-6">Verification Documents</h3>
-                            <p className="text-zinc-400 text-sm mb-8">To become a verified user, please upload your organization ID and necessary proof documents.</p>
+                    {/* Right Column */}
+                    <div className="lg:col-span-2 space-y-8">
+                        {/* Verification Form */}
+                        <div className="glass-strong rounded-3xl p-8">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center text-xl">
+                                    📋
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-bold text-white">Verification Documents</h3>
+                                    <p className="text-gray-400 text-sm">Upload documents to get verified</p>
+                                </div>
+                            </div>
 
                             <form onSubmit={handleSubmit} className="space-y-6">
                                 <div>
-                                    <label className="block text-sm font-medium text-zinc-400 mb-2">Designation / Job Title</label>
+                                    <label className="block text-sm font-medium text-gray-400 mb-2">Designation / Job Title</label>
                                     <input
                                         type="text"
-                                        className="w-full bg-black border border-zinc-800 rounded-lg p-3 text-white focus:outline-none focus:border-pink-500 transition-colors"
+                                        className="premium-input w-full"
                                         value={formData.designation}
                                         onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
-                                        placeholder="e.g. Event Manager"
+                                        placeholder="e.g. Event Manager, Student"
                                     />
                                 </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium text-zinc-400 mb-2">Profile Picture</label>
-                                    <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'profile_image')} className="w-full text-sm text-zinc-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-zinc-800 file:text-white hover:file:bg-zinc-700" />
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <FileUpload
+                                        label="Profile Picture"
+                                        accept="image/*"
+                                        file={formData.profile_image}
+                                        onChange={(e) => handleFileChange(e, 'profile_image')}
+                                    />
+                                    <FileUpload
+                                        label="Organization ID Card"
+                                        accept="image/*,.pdf"
+                                        file={formData.organization_id_card}
+                                        onChange={(e) => handleFileChange(e, 'organization_id_card')}
+                                    />
                                 </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium text-zinc-400 mb-2">Organization ID Card</label>
-                                    <input type="file" accept="image/*,.pdf" onChange={(e) => handleFileChange(e, 'organization_id_card')} className="w-full text-sm text-zinc-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-zinc-800 file:text-white hover:file:bg-zinc-700" />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-zinc-400 mb-2">Proof of Legitimacy (Certificates/Docs)</label>
-                                    <input type="file" accept="image/*,.pdf" onChange={(e) => handleFileChange(e, 'proof_document')} className="w-full text-sm text-zinc-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-zinc-800 file:text-white hover:file:bg-zinc-700" />
-                                </div>
+                                <FileUpload
+                                    label="Proof of Legitimacy (Certificates/Docs)"
+                                    accept="image/*,.pdf"
+                                    file={formData.proof_document}
+                                    onChange={(e) => handleFileChange(e, 'proof_document')}
+                                />
 
                                 <button
                                     type="submit"
                                     disabled={uploading}
-                                    className="px-6 py-3 rounded-lg bg-white text-black font-bold hover:bg-zinc-200 transition-colors disabled:opacity-50"
+                                    className="gradient-btn px-8 py-3 rounded-xl font-bold disabled:opacity-50"
                                 >
-                                    {uploading ? 'Uploading...' : 'Save Changes'}
+                                    {uploading ? (
+                                        <span className="flex items-center gap-2">
+                                            <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                            </svg>
+                                            Uploading...
+                                        </span>
+                                    ) : (
+                                        'Save Changes'
+                                    )}
                                 </button>
                             </form>
                         </div>
 
-                        {/* Organized Events Section */}
-                        {user.role === 'organizer' && (
-                            <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-8 mt-8">
-                                <h3 className="text-xl font-bold text-white mb-6">Events You Organized</h3>
+                        {/* Organized Events */}
+                        {user?.role === 'organizer' && (
+                            <div className="glass-strong rounded-3xl p-8">
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center text-xl">
+                                        🎪
+                                    </div>
+                                    <div>
+                                        <h3 className="text-xl font-bold text-white">Events You Organized</h3>
+                                        <p className="text-gray-400 text-sm">Manage your created events</p>
+                                    </div>
+                                </div>
                                 <MyOrganizedEventsList userId={user.id} />
                             </div>
                         )}
 
                         {/* Friends Section */}
-                        <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-8 mt-8">
-                            <FriendsManager userId={user.id} />
+                        <div className="glass-strong rounded-3xl p-8">
+                            <FriendsManager userId={user?.id} />
                         </div>
                     </div>
                 </div>
@@ -199,32 +271,75 @@ export default function ProfilePage() {
     );
 }
 
+function FileUpload({ label, accept, file, onChange }: { label: string; accept: string; file: File | null; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void }) {
+    return (
+        <div>
+            <label className="block text-sm font-medium text-gray-400 mb-2">{label}</label>
+            <div className="glass rounded-xl p-4 hover:bg-white/5 transition-colors cursor-pointer">
+                <input type="file" accept={accept} onChange={onChange} className="w-full text-sm text-gray-400" />
+                {file && (
+                    <span className="text-green-400 text-sm mt-2 block flex items-center gap-2">
+                        <span>✓</span> {file.name}
+                    </span>
+                )}
+            </div>
+        </div>
+    );
+}
+
 function MyOrganizedEventsList({ userId }: { userId: string }) {
     const [events, setEvents] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         fetch(`/api/events?organizer_id=${userId}`)
             .then(res => res.json())
             .then(data => setEvents(data))
-            .catch(console.error);
+            .catch(console.error)
+            .finally(() => setLoading(false));
     }, [userId]);
 
-    if (events.length === 0) return <p className="text-zinc-500 italic">No events organized yet.</p>;
+    if (loading) {
+        return (
+            <div className="space-y-4">
+                {[1, 2].map(i => (
+                    <div key={i} className="skeleton h-20 rounded-xl" />
+                ))}
+            </div>
+        );
+    }
+
+    if (events.length === 0) {
+        return (
+            <div className="text-center py-8 glass rounded-xl">
+                <div className="text-3xl mb-2">🎭</div>
+                <p className="text-gray-400">No events organized yet</p>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-4">
             {events.map((e: any) => (
-                <div key={e.event_id} className="bg-black border border-zinc-800 p-4 rounded-xl flex justify-between items-center hover:border-zinc-700 transition">
-                    <div>
-                        <div className="flex items-center gap-2 mb-1">
-                            <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold ${e.status === 'PUBLISHED' ? 'bg-green-500/20 text-green-500' : 'bg-yellow-500/20 text-yellow-500'}`}>{e.status}</span>
-                            <span className="text-xs text-zinc-500">{new Date(e.start_time).toLocaleDateString()}</span>
+                <Link
+                    key={e.event_id}
+                    href={`/dashboard/event/${e.event_id}`}
+                    className="block premium-card p-4 group"
+                >
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <div className="flex items-center gap-2 mb-1">
+                                <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold ${e.status === 'PUBLISHED' ? 'badge-success' : 'badge-warning'}`}>
+                                    {e.status}
+                                </span>
+                                <span className="text-xs text-gray-500">{new Date(e.start_time).toLocaleDateString()}</span>
+                            </div>
+                            <h4 className="font-bold text-white group-hover:text-gradient transition-all">{e.title}</h4>
+                            <p className="text-xs text-gray-400">{e.venue_name || 'Online'}</p>
                         </div>
-                        <h4 className="font-bold text-white">{e.title}</h4>
-                        <p className="text-xs text-zinc-400">{e.venue_name || 'Online'}</p>
+                        <span className="text-gray-400 group-hover:text-pink-500 group-hover:translate-x-1 transition-all">→</span>
                     </div>
-                    <a href={`/dashboard/event/${e.event_id}`} className="text-sm text-zinc-400 hover:text-white underline">View</a>
-                </div>
+                </Link>
             ))}
         </div>
     );
@@ -287,12 +402,10 @@ function FriendsManager({ userId }: { userId: string }) {
         } catch (e) { console.error(e); }
     };
 
-    // Chat Window
     const ChatWindow = ({ friend, onClose }: { friend: any, onClose: () => void }) => {
         const [messages, setMessages] = useState<any[]>([]);
         const [input, setInput] = useState('');
         const [sending, setSending] = useState(false);
-        const messagesEndRef = useState<HTMLDivElement | null>(null);
 
         useEffect(() => {
             fetchMessages();
@@ -328,38 +441,42 @@ function FriendsManager({ userId }: { userId: string }) {
         };
 
         return (
-            <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 backdrop-blur-sm animate-in fade-in duration-200">
-                <div className="bg-zinc-900 border border-zinc-700 w-full max-w-md rounded-2xl overflow-hidden flex flex-col h-[600px] shadow-2xl">
-                    <div className="bg-zinc-800 p-4 flex justify-between items-center border-b border-zinc-700">
+            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                <div className="glass-strong w-full max-w-md rounded-3xl overflow-hidden flex flex-col h-[600px] shadow-2xl">
+                    {/* Header */}
+                    <div className="p-4 border-b border-white/10 flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-zinc-700 overflow-hidden pt-1.5 text-center text-lg">
-                                {friend.image ? <img src={friend.image} className="w-full h-full object-cover" /> : '👤'}
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 p-0.5">
+                                <div className="w-full h-full rounded-full bg-black overflow-hidden flex items-center justify-center">
+                                    {friend.image ? <img src={friend.image} className="w-full h-full object-cover" /> : <span>👤</span>}
+                                </div>
                             </div>
                             <div>
                                 <h3 className="font-bold text-white">{friend.name}</h3>
                                 <div className="flex items-center gap-1.5">
-                                    <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                                    <span className="text-xs text-zinc-400">Online</span>
+                                    <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                                    <span className="text-xs text-gray-400">Online</span>
                                 </div>
                             </div>
                         </div>
-                        <button onClick={onClose} className="text-zinc-400 hover:text-white text-2xl px-2">×</button>
+                        <button onClick={onClose} className="text-gray-400 hover:text-white text-2xl w-10 h-10 glass rounded-full flex items-center justify-center">×</button>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-zinc-950">
+                    {/* Messages */}
+                    <div className="flex-1 overflow-y-auto p-4 space-y-4">
                         {messages.length === 0 && (
                             <div className="text-center mt-20 opacity-50">
                                 <div className="text-4xl mb-2">👋</div>
-                                <p className="text-zinc-400 text-sm">Start a conversation with {friend.name}</p>
+                                <p className="text-gray-400 text-sm">Start a conversation with {friend.name}</p>
                             </div>
                         )}
                         {messages.map((msg) => {
                             const isMe = msg.sender_id == userId;
                             return (
                                 <div key={msg.message_id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                                    <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed shadow-sm ${isMe ? 'bg-gradient-to-br from-pink-600 to-indigo-600 text-white rounded-tr-none' : 'bg-zinc-800 text-zinc-200 rounded-tl-none border border-zinc-700'}`}>
+                                    <div className={`max-w-[75%] px-4 py-3 rounded-2xl text-sm leading-relaxed ${isMe ? 'bg-gradient-to-br from-pink-600 to-indigo-600 text-white rounded-tr-sm' : 'glass text-white rounded-tl-sm'}`}>
                                         <p>{msg.content}</p>
-                                        <span className={`text-[10px] block text-right mt-1 ${isMe ? 'text-pink-200/70' : 'text-zinc-500'}`}>
+                                        <span className={`text-[10px] block text-right mt-1 ${isMe ? 'text-pink-200/70' : 'text-gray-500'}`}>
                                             {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </span>
                                     </div>
@@ -368,9 +485,10 @@ function FriendsManager({ userId }: { userId: string }) {
                         })}
                     </div>
 
-                    <form onSubmit={sendMessage} className="p-3 bg-zinc-900 border-t border-zinc-800 flex gap-2 items-center">
+                    {/* Input */}
+                    <form onSubmit={sendMessage} className="p-4 border-t border-white/10 flex gap-3 items-center">
                         <input
-                            className="flex-1 bg-black border border-zinc-700 rounded-full px-4 py-2.5 text-white focus:outline-none focus:border-pink-500 text-sm transition-colors"
+                            className="flex-1 premium-input"
                             placeholder="Type a message..."
                             value={input}
                             onChange={e => setInput(e.target.value)}
@@ -378,9 +496,9 @@ function FriendsManager({ userId }: { userId: string }) {
                         />
                         <button
                             disabled={sending || !input.trim()}
-                            className="bg-indigo-600 hover:bg-indigo-500 text-white w-10 h-10 rounded-full flex items-center justify-center disabled:opacity-50 disabled:hover:bg-indigo-600 transition-all shadow-lg shadow-indigo-500/20"
+                            className="gradient-btn w-12 h-12 rounded-xl flex items-center justify-center disabled:opacity-50"
                         >
-                            <svg className="w-4 h-4 translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                            <svg className="w-5 h-5 translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                         </button>
                     </form>
                 </div>
@@ -392,90 +510,119 @@ function FriendsManager({ userId }: { userId: string }) {
         <div>
             {activeChat && <ChatWindow friend={activeChat} onClose={() => setActiveChat(null)} />}
 
-            <h3 className="text-xl font-bold text-white mb-6">Friends & Connections 👥</h3>
+            <div className="flex items-center gap-3 mb-6">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-500 to-teal-500 flex items-center justify-center text-xl">
+                    👥
+                </div>
+                <div>
+                    <h3 className="text-xl font-bold text-white">Friends & Connections</h3>
+                    <p className="text-gray-400 text-sm">Connect with other users</p>
+                </div>
+            </div>
 
-            <div className="flex gap-2 mb-6">
+            {/* Search */}
+            <div className="flex gap-3 mb-6">
                 <input
-                    className="flex-1 bg-black border border-zinc-700 rounded-lg p-3 text-white focus:outline-none focus:border-pink-500"
+                    className="flex-1 premium-input"
                     placeholder="Search users by name or email..."
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleSearch()}
                 />
-                <button onClick={handleSearch} disabled={searching} className="bg-zinc-800 text-white px-4 rounded-lg hover:bg-zinc-700">Find</button>
+                <button onClick={handleSearch} disabled={searching} className="gradient-btn px-6 rounded-xl font-semibold disabled:opacity-50">
+                    {searching ? '...' : 'Find'}
+                </button>
             </div>
 
+            {/* Search Results */}
             {searchResults.length > 0 && (
-                <div className="mb-8 border-b border-zinc-800 pb-6">
-                    <h4 className="text-sm font-bold text-zinc-400 mb-4">Found Users</h4>
-                    <div className="grid grid-cols-1 gap-3">
+                <div className="mb-8 pb-6 border-b border-white/10">
+                    <h4 className="text-sm font-bold text-gray-400 mb-4">Found Users</h4>
+                    <div className="space-y-3">
                         {searchResults.map(u => (
-                            <div key={u.id} className="flex items-center justify-between bg-black p-3 rounded-xl border border-zinc-800">
+                            <div key={u.id} className="flex items-center justify-between premium-card p-4">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-full bg-zinc-800 overflow-hidden text-center pt-1 text-sm">{u.profile_image ? <img src={u.profile_image} className="w-full h-full object-cover" /> : '👤'}</div>
+                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 p-0.5">
+                                        <div className="w-full h-full rounded-full bg-black overflow-hidden flex items-center justify-center">
+                                            {u.profile_image ? <img src={u.profile_image} className="w-full h-full object-cover" /> : <span>👤</span>}
+                                        </div>
+                                    </div>
                                     <div>
                                         <p className="font-bold text-white text-sm">{u.name}</p>
-                                        <p className="text-xs text-zinc-500">{u.email}</p>
+                                        <p className="text-xs text-gray-500">{u.email}</p>
                                     </div>
                                 </div>
-                                <button onClick={() => sendRequest(u.id)} className="text-xs bg-indigo-500/20 text-indigo-400 px-3 py-1.5 rounded hover:bg-indigo-500 hover:text-white transition">+ Add</button>
+                                <button onClick={() => sendRequest(u.id)} className="badge-primary hover:bg-pink-500/30 transition-colors cursor-pointer">+ Add</button>
                             </div>
                         ))}
                     </div>
                 </div>
             )}
 
-            <div className="space-y-6">
-                {friends.some(f => f.status === 'PENDING' && f.is_incoming) && (
-                    <div>
-                        <h4 className="text-sm font-bold text-yellow-500 mb-3">Pending Requests</h4>
-                        <div className="space-y-3">
-                            {friends.filter(f => f.status === 'PENDING' && f.is_incoming).map(f => (
-                                <div key={f.id} className="flex items-center justify-between bg-zinc-900/50 p-3 rounded-xl border border-yellow-500/20">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-zinc-800 overflow-hidden text-center pt-1 text-sm">{f.friend.image ? <img src={f.friend.image} className="w-full h-full object-cover" /> : '👤'}</div>
-                                        <p className="font-bold text-white text-sm">{f.friend.name}</p>
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <button onClick={() => updateStatus(f.id, 'ACCEPTED')} className="text-xs bg-green-500 text-white px-3 py-1 rounded">Accept</button>
-                                        <button onClick={() => updateStatus(f.id, 'REJECTED')} className="text-xs bg-red-500/20 text-red-500 px-3 py-1 rounded">Reject</button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
-                <div>
-                    <h4 className="text-sm font-bold text-zinc-400 mb-3">My Friends ({friends.filter(f => f.status === 'ACCEPTED').length})</h4>
-                    {friends.filter(f => f.status === 'ACCEPTED').length === 0 ? (
-                        <p className="text-zinc-500 text-sm italic">You haven't added any friends yet.</p>
-                    ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            {friends.filter(f => f.status === 'ACCEPTED').map(f => (
-                                <div key={f.id} className="flex items-center justify-between bg-black p-3 rounded-xl border border-zinc-800 group hover:border-zinc-600 transition-colors">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-full bg-zinc-800 overflow-hidden text-center pt-1.5">{f.friend.image ? <img src={f.friend.image} className="w-full h-full object-cover" /> : '👤'}</div>
-                                        <div>
-                                            <p className="font-bold text-white text-sm">{f.friend.name}</p>
-                                            <div className="flex items-center gap-1">
-                                                <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
-                                                <span className="text-[10px] text-zinc-500">Friend</span>
-                                            </div>
+            {/* Pending Requests */}
+            {friends.some(f => f.status === 'PENDING' && f.is_incoming) && (
+                <div className="mb-8">
+                    <h4 className="text-sm font-bold text-yellow-500 mb-4 flex items-center gap-2">
+                        <span>⏳</span> Pending Requests
+                    </h4>
+                    <div className="space-y-3">
+                        {friends.filter(f => f.status === 'PENDING' && f.is_incoming).map(f => (
+                            <div key={f.id} className="flex items-center justify-between premium-card p-4 border-yellow-500/20">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-500 to-orange-500 p-0.5">
+                                        <div className="w-full h-full rounded-full bg-black overflow-hidden flex items-center justify-center">
+                                            {f.friend.image ? <img src={f.friend.image} className="w-full h-full object-cover" /> : <span>👤</span>}
                                         </div>
                                     </div>
-                                    <button
-                                        onClick={() => setActiveChat(f.friend)}
-                                        className="bg-zinc-800 hover:bg-zinc-700 text-white w-9 h-9 rounded-full flex items-center justify-center transition-all hover:scale-110 hover:shadow-lg hover:shadow-pink-500/20 active:scale-95"
-                                        title="Send Message"
-                                    >
-                                        💬
-                                    </button>
+                                    <p className="font-bold text-white">{f.friend.name}</p>
                                 </div>
-                            ))}
-                        </div>
-                    )}
+                                <div className="flex gap-2">
+                                    <button onClick={() => updateStatus(f.id, 'ACCEPTED')} className="px-4 py-2 rounded-lg bg-green-500 text-white text-sm font-semibold hover:bg-green-400 transition-colors">Accept</button>
+                                    <button onClick={() => updateStatus(f.id, 'REJECTED')} className="px-4 py-2 rounded-lg bg-red-500/20 text-red-400 text-sm font-semibold hover:bg-red-500/30 transition-colors">Reject</button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
+            )}
+
+            {/* Friends List */}
+            <div>
+                <h4 className="text-sm font-bold text-gray-400 mb-4">My Friends ({friends.filter(f => f.status === 'ACCEPTED').length})</h4>
+                {friends.filter(f => f.status === 'ACCEPTED').length === 0 ? (
+                    <div className="text-center py-8 glass rounded-xl">
+                        <div className="text-3xl mb-2">🤝</div>
+                        <p className="text-gray-400 text-sm">No friends yet. Search and add people!</p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {friends.filter(f => f.status === 'ACCEPTED').map(f => (
+                            <div key={f.id} className="flex items-center justify-between premium-card p-4 group">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 p-0.5 group-hover:scale-105 transition-transform">
+                                        <div className="w-full h-full rounded-full bg-black overflow-hidden flex items-center justify-center">
+                                            {f.friend.image ? <img src={f.friend.image} className="w-full h-full object-cover" /> : <span>👤</span>}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <p className="font-bold text-white">{f.friend.name}</p>
+                                        <div className="flex items-center gap-1">
+                                            <span className="w-1.5 h-1.5 bg-green-500 rounded-full" />
+                                            <span className="text-[10px] text-gray-500">Friend</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setActiveChat(f.friend)}
+                                    className="gradient-btn w-10 h-10 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform"
+                                    title="Send Message"
+                                >
+                                    💬
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
         </div>
     );

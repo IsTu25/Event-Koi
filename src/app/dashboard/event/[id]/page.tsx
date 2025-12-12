@@ -2,19 +2,17 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import Link from 'next/link';
 
 export default function EventDetails() {
     const router = useRouter();
-    const params = useParams(); // params is NOT a promise in client components in this version, check recent Next.js. Actually in 15 it behaves differently but usually unpacked. Let's assume standard client usage. NOTE: In Next 15 params is a Promise. But usually standard hooks handle it. Let's wrap in `use` or just create safe access. 
-    // Wait, let's keep it simple. useParams() usually returns the object directly in client components in older 13/14 versions. In 15 it might be async. I'll code defensively or just assume 14/15 compat.
-    // Actually, in standard Client Components `useParams` returns the object.
-
+    const params = useParams();
     const { id } = params;
 
     const [user, setUser] = useState<any>(null);
     const [event, setEvent] = useState<any>(null);
     const [ticketTypes, setTicketTypes] = useState<any[]>([]);
-    const [sponsors, setSponsors] = useState<any[]>([]); // ADD THIS LINE
+    const [sponsors, setSponsors] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     const [newTicket, setNewTicket] = useState({
@@ -128,7 +126,7 @@ export default function EventDetails() {
 
             if (res.ok) {
                 setNewTicket({ name: '', price: '', quantity: '' });
-                fetchData(id as string); // Refresh list
+                fetchData(id as string);
             } else {
                 alert('Failed to add ticket type');
             }
@@ -167,127 +165,201 @@ export default function EventDetails() {
         }
     };
 
-    if (!user || loading) return <div className="min-h-screen bg-black text-white p-8 flex items-center justify-center">Loading...</div>;
-    if (!event) return <div className="min-h-screen bg-black text-white p-8">Event not found</div>;
+    if (!user || loading) {
+        return (
+            <div className="min-h-screen animated-gradient-bg flex items-center justify-center">
+                <div className="text-center">
+                    <div className="w-16 h-16 border-4 border-pink-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                    <p className="text-white text-lg">Loading event...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (!event) {
+        return (
+            <div className="min-h-screen animated-gradient-bg flex items-center justify-center">
+                <div className="text-center glass-strong p-12 rounded-3xl">
+                    <div className="text-6xl mb-4">😕</div>
+                    <h2 className="text-2xl font-bold text-white mb-2">Event Not Found</h2>
+                    <p className="text-gray-400 mb-6">The event you're looking for doesn't exist or has been removed.</p>
+                    <Link href="/dashboard" className="gradient-btn px-6 py-3 rounded-xl font-bold inline-block">
+                        ← Back to Dashboard
+                    </Link>
+                </div>
+            </div>
+        );
+    }
 
     const isOrganizer = user.id === event.organizer_id;
 
     return (
-        <div className="min-h-screen bg-black text-white p-8">
-            <div className="max-w-7xl mx-auto">
-                <header className="mb-12 border-b border-white/10 pb-6">
-                    <button
-                        onClick={() => router.push('/dashboard')}
-                        className="text-zinc-400 hover:text-white mb-4 flex items-center gap-2"
+        <div className="relative min-h-screen animated-gradient-bg text-white">
+            {/* Floating Orbs */}
+            <div className="floating-orb orb-1 opacity-20" />
+            <div className="floating-orb orb-2 opacity-20" />
+
+            <div className="relative z-10 max-w-7xl mx-auto p-6 lg:p-8">
+                {/* Header */}
+                <header className="mb-8">
+                    <Link
+                        href="/dashboard"
+                        className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-6"
                     >
-                        ← Back to Dashboard
-                    </button>
-                    <div className="flex justify-between items-end">
-                        <div>
-                            {isEditing ? (
-                                <div className="space-y-3 mb-4 bg-zinc-900/80 p-4 rounded-xl border border-zinc-700">
-                                    <input
-                                        type="text"
-                                        className="w-full bg-black border border-zinc-700 rounded p-2 text-white font-bold text-2xl"
-                                        value={editFormData.title}
-                                        onChange={e => setEditFormData({ ...editFormData, title: e.target.value })}
-                                        placeholder="Event Title"
-                                    />
-                                    <div className="grid grid-cols-2 gap-2">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                        Back to Dashboard
+                    </Link>
+
+                    {/* Event Hero */}
+                    <div className="glass-strong rounded-3xl p-8 mb-8">
+                        <div className="flex flex-col lg:flex-row justify-between gap-6">
+                            <div className="flex-1">
+                                {isEditing ? (
+                                    <div className="space-y-4">
                                         <input
-                                            type="datetime-local"
-                                            className="bg-black border border-zinc-700 rounded p-2 text-zinc-300 text-sm"
-                                            value={editFormData.start_time}
-                                            onChange={e => setEditFormData({ ...editFormData, start_time: e.target.value })}
+                                            type="text"
+                                            className="premium-input w-full text-2xl font-bold"
+                                            value={editFormData.title}
+                                            onChange={e => setEditFormData({ ...editFormData, title: e.target.value })}
+                                            placeholder="Event Title"
                                         />
-                                        <select
-                                            className="bg-black border border-zinc-700 rounded p-2 text-zinc-300 text-sm"
-                                            value={editFormData.venue_id}
-                                            onChange={e => setEditFormData({ ...editFormData, venue_id: e.target.value })}
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <input
+                                                type="datetime-local"
+                                                className="premium-input dark-calendar"
+                                                value={editFormData.start_time}
+                                                onChange={e => setEditFormData({ ...editFormData, start_time: e.target.value })}
+                                            />
+                                            <select
+                                                className="premium-input"
+                                                value={editFormData.venue_id}
+                                                onChange={e => setEditFormData({ ...editFormData, venue_id: e.target.value })}
+                                            >
+                                                <option value="">Select Venue</option>
+                                                {venues.map(v => <option key={v.venue_id} value={v.venue_id}>{v.name}</option>)}
+                                            </select>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="flex flex-wrap items-center gap-3 mb-4">
+                                            <span className={`badge-${event.status === 'PUBLISHED' ? 'success' : 'warning'}`}>
+                                                {event.status}
+                                            </span>
+                                            {event.category_name && (
+                                                <span className="badge-primary">{event.category_name}</span>
+                                            )}
+                                        </div>
+                                        <h1 className="text-4xl lg:text-5xl font-black text-gradient-glow mb-4">
+                                            {event.title}
+                                        </h1>
+                                        <div className="flex flex-wrap items-center gap-6 text-gray-400">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xl">📅</span>
+                                                <div>
+                                                    <span className="block text-white font-medium">
+                                                        {new Date(event.start_time).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+                                                    </span>
+                                                    <span className="text-sm">
+                                                        {new Date(event.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {new Date(event.end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            {event.venue_name && (
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-xl">📍</span>
+                                                    <div>
+                                                        <span className="block text-white font-medium">{event.venue_name}</span>
+                                                        <span className="text-sm">{event.venue_city}</span>
+                                                    </div>
+                                                </div>
+                                            )}
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xl">👤</span>
+                                                <div>
+                                                    <span className="block text-white font-medium">{event.organizer_name}</span>
+                                                    <span className="text-sm">Organizer</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+
+                            {/* Organizer Controls */}
+                            {isOrganizer && (
+                                <div className="flex flex-col items-end gap-4">
+                                    <div className="stat-card text-center min-w-[150px]">
+                                        <span className="text-sm text-gray-400 block mb-1">Total Sales</span>
+                                        <span className="text-3xl font-black text-gradient">৳0</span>
+                                    </div>
+                                    <div className="flex gap-3">
+                                        <button
+                                            onClick={() => setIsEditing(!isEditing)}
+                                            className="glass px-5 py-2.5 rounded-xl font-semibold hover:bg-white/10 transition-colors"
                                         >
-                                            <option value="">Select Venue</option>
-                                            {venues.map(v => <option key={v.venue_id} value={v.venue_id}>{v.name}</option>)}
-                                        </select>
+                                            {isEditing ? '✕ Cancel' : '✏️ Edit'}
+                                        </button>
+                                        {isEditing && (
+                                            <button
+                                                onClick={handleUpdateEvent}
+                                                className="gradient-btn px-5 py-2.5 rounded-xl font-semibold"
+                                            >
+                                                💾 Save
+                                            </button>
+                                        )}
+                                        <button
+                                            onClick={async () => {
+                                                if (confirm("Are you sure you want to DELETE this event? This action cannot be undone.")) {
+                                                    await fetch(`/api/events/${id}`, { method: 'DELETE' });
+                                                    router.push('/dashboard');
+                                                }
+                                            }}
+                                            className="glass px-5 py-2.5 rounded-xl font-semibold text-red-400 hover:bg-red-500/20 transition-colors border border-red-500/30"
+                                        >
+                                            🗑️ Delete
+                                        </button>
                                     </div>
                                 </div>
-                            ) : (
-                                <>
-                                    <span className={`px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-pink-500/20 to-purple-500/20 text-pink-400 border border-pink-500/30 mb-4 inline-block`}>
-                                        {event.status}
-                                    </span>
-                                    <h1 className="text-4xl font-bold text-white mb-2">
-                                        {event.title}
-                                    </h1>
-                                    <div className="flex items-center gap-4 text-zinc-400">
-                                        <span>📅 {new Date(event.start_time).toLocaleDateString()}</span>
-                                        <span>📍 {event.venue_name}, {event.venue_city}</span>
-                                    </div>
-                                </>
                             )}
                         </div>
-                        {isOrganizer && (
-                            <div className="flex flex-col items-end gap-4">
-                                <div className="bg-zinc-900 border border-zinc-700 px-4 py-2 rounded-lg mb-2">
-                                    <span className="text-xs text-zinc-500 uppercase tracking-wider block">Total Sales</span>
-                                    <span className="text-xl font-bold text-white">৳0.00</span>
-                                </div>
-                                <div className="flex gap-2">
-                                    <button
-                                        onClick={() => setIsEditing(!isEditing)}
-                                        className="bg-zinc-800 text-zinc-300 px-4 py-2 rounded-lg hover:bg-zinc-700 transition"
-                                    >
-                                        {isEditing ? 'Cancel Edit' : 'Edit Event'}
-                                    </button>
-                                    <button
-                                        onClick={async () => {
-                                            if (confirm("Are you sure you want to DELETE this event? This action cannot be undone.")) {
-                                                await fetch(`/api/events/${id}`, { method: 'DELETE' });
-                                                router.push('/dashboard');
-                                            }
-                                        }}
-                                        className="bg-red-500/20 text-red-500 border border-red-500/50 px-4 py-2 rounded-lg hover:bg-red-500 hover:text-white transition"
-                                    >
-                                        Delete Event
-                                    </button>
-                                </div>
-                            </div>
-                        )}
                     </div>
                 </header>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Main Content */}
                     <div className="lg:col-span-2 space-y-8">
-                        <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-8">
+                        {/* Updates Section */}
+                        <div className="glass-strong rounded-3xl p-8">
                             <EventUpdates eventId={id as string} user={user} isOrganizer={isOrganizer} />
                         </div>
 
                         {/* About Section */}
-                        <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-8">
-                            <div className="flex justify-between items-center mb-4">
-                                <h2 className="text-xl font-bold text-white">About Event</h2>
-                                {isEditing && (
-                                    <button
-                                        onClick={handleUpdateEvent}
-                                        className="bg-green-500 text-white px-4 py-1 rounded text-sm font-bold hover:bg-green-600 transition"
-                                    >
-                                        Save Changes
-                                    </button>
-                                )}
+                        <div className="glass-strong rounded-3xl p-8">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center text-xl">
+                                    📝
+                                </div>
+                                <div>
+                                    <h2 className="text-xl font-bold text-white">About This Event</h2>
+                                    <p className="text-gray-400 text-sm">Event description and details</p>
+                                </div>
                             </div>
 
                             {isEditing ? (
                                 <div className="space-y-4">
                                     <textarea
-                                        className="w-full bg-black border border-zinc-700 rounded p-4 text-zinc-300 min-h-[200px]"
+                                        className="premium-input w-full min-h-[200px] resize-none"
                                         value={editFormData.description}
                                         onChange={e => setEditFormData({ ...editFormData, description: e.target.value })}
                                         placeholder="Event Description..."
                                     />
                                     <div>
-                                        <label className="text-zinc-500 text-sm mb-1 block">Category</label>
+                                        <label className="text-gray-400 text-sm mb-2 block">Category</label>
                                         <select
-                                            className="w-full bg-black border border-zinc-700 rounded p-2 text-zinc-300"
+                                            className="premium-input w-full"
                                             value={editFormData.category_id}
                                             onChange={e => setEditFormData({ ...editFormData, category_id: e.target.value })}
                                         >
@@ -297,28 +369,41 @@ export default function EventDetails() {
                                     </div>
                                 </div>
                             ) : (
-                                <p className="text-zinc-400 leading-relaxed whitespace-pre-wrap">
-                                    {event.description || 'No description provided.'}
+                                <p className="text-gray-300 leading-relaxed whitespace-pre-wrap">
+                                    {event.description || 'No description provided for this event.'}
                                 </p>
                             )}
                         </div>
 
-                        {/* Sponsors List */}
-                        <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-8">
-                            <h2 className="text-xl font-bold text-white mb-6">Sponsors</h2>
-                            {sponsors.length === 0 ? (
-                                <p className="text-zinc-500 italic">No sponsors yet.</p>
+                        {/* Sponsors Section */}
+                        <div className="glass-strong rounded-3xl p-8">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-xl">
+                                    🤝
+                                </div>
+                                <div>
+                                    <h2 className="text-xl font-bold text-white">Sponsors</h2>
+                                    <p className="text-gray-400 text-sm">Companies supporting this event</p>
+                                </div>
+                            </div>
+
+                            {sponsors.filter(s => s.status === 'APPROVED').length === 0 ? (
+                                <div className="text-center py-12 glass rounded-2xl">
+                                    <div className="text-4xl mb-3">🏢</div>
+                                    <p className="text-gray-400">No sponsors yet</p>
+                                </div>
                             ) : (
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                    {sponsors.map((s: any) => (
-                                        <div key={s.sponsor_id} className="bg-black border border-zinc-800 rounded-xl p-4 flex flex-col items-center justify-center text-center">
+                                    {sponsors.filter(s => s.status === 'APPROVED').map((s: any) => (
+                                        <div key={s.sponsor_id} className="premium-card p-6 text-center group">
                                             {s.logo_url && (
-                                                <img src={s.logo_url} alt={s.name} className="h-12 object-contain mb-3" />
+                                                <img src={s.logo_url} alt={s.name} className="h-12 object-contain mx-auto mb-4 group-hover:scale-110 transition-transform" />
                                             )}
-                                            <h4 className="font-bold text-white">{s.name}</h4>
-                                            <span className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded mt-2 ${s.tier === 'Gold' ? 'bg-yellow-500/20 text-yellow-500' :
-                                                s.tier === 'Silver' ? 'bg-gray-400/20 text-gray-400' :
-                                                    'bg-orange-800/20 text-orange-400'
+                                            <h4 className="font-bold text-white mb-2">{s.name}</h4>
+                                            <span className={`text-xs uppercase font-bold tracking-wider px-3 py-1 rounded-full ${s.tier === 'Gold' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' :
+                                                    s.tier === 'Silver' ? 'bg-gray-400/20 text-gray-300 border border-gray-400/30' :
+                                                        s.tier === 'Bronze' ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' :
+                                                            'badge-primary'
                                                 }`}>{s.tier}</span>
                                         </div>
                                     ))}
@@ -326,26 +411,33 @@ export default function EventDetails() {
                             )}
                         </div>
 
-                        {/* Ticket Types List */}
-                        <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-8">
-                            <div className="flex justify-between items-center mb-6">
-                                <h2 className="text-xl font-bold text-white">Ticket Packages</h2>
+                        {/* Ticket Types Section */}
+                        <div className="glass-strong rounded-3xl p-8">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center text-xl">
+                                    🎫
+                                </div>
+                                <div>
+                                    <h2 className="text-xl font-bold text-white">Ticket Packages</h2>
+                                    <p className="text-gray-400 text-sm">Available ticket options</p>
+                                </div>
                             </div>
 
                             {ticketTypes.length === 0 ? (
-                                <div className="text-center py-12 border border-zinc-700 border-dashed rounded-xl">
-                                    <p className="text-zinc-500">No tickets created yet.</p>
+                                <div className="text-center py-12 glass rounded-2xl border-dashed border-2 border-white/10">
+                                    <div className="text-4xl mb-3">🎟️</div>
+                                    <p className="text-gray-400">No tickets created yet</p>
                                 </div>
                             ) : (
                                 <div className="space-y-4">
                                     {ticketTypes.map((ticket) => (
-                                        <div key={ticket.ticket_type_id} className="flex justify-between items-center p-4 bg-black border border-zinc-800 rounded-xl hover:border-pink-500/30 transition-colors">
+                                        <div key={ticket.ticket_type_id} className="premium-card p-6 flex justify-between items-center">
                                             <div>
-                                                <h3 className="font-bold text-white text-lg">{ticket.name}</h3>
-                                                <p className="text-sm text-zinc-500">{ticket.quantity} available</p>
+                                                <h3 className="text-xl font-bold text-white mb-1">{ticket.name}</h3>
+                                                <p className="text-sm text-gray-400">{ticket.quantity} tickets available</p>
                                             </div>
                                             <div className="text-right">
-                                                <p className="text-2xl font-bold text-white">৳{Number(ticket.price).toFixed(2)}</p>
+                                                <p className="text-3xl font-black text-gradient">৳{Number(ticket.price).toFixed(0)}</p>
                                             </div>
                                         </div>
                                     ))}
@@ -354,84 +446,204 @@ export default function EventDetails() {
                         </div>
                     </div>
 
-                    {/* Sidebar / Manage Actions */}
+                    {/* Sidebar */}
                     <div className="space-y-6">
                         {isOrganizer ? (
                             <>
-                                {/* Ticket Form */}
-                                <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
-                                    <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
-                                        <span>🎟️</span> Create Ticket Type
-                                    </h3>
+                                {/* Create Ticket Form */}
+                                <div className="glass-strong rounded-3xl p-6">
+                                    <div className="flex items-center gap-3 mb-6">
+                                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center text-lg">
+                                            🎟️
+                                        </div>
+                                        <h3 className="text-lg font-bold text-white">Create Ticket</h3>
+                                    </div>
                                     <form onSubmit={handleAddTicket} className="space-y-4">
                                         <div>
-                                            <label className="block text-sm font-medium text-zinc-400 mb-2">Ticket Name</label>
-                                            <input type="text" placeholder="e.g. VIP Access" required className="w-full bg-black border border-zinc-800 rounded-lg p-3 text-white focus:outline-none focus:border-pink-500 transition-colors" value={newTicket.name} onChange={(e) => setNewTicket({ ...newTicket, name: e.target.value })} />
+                                            <label className="block text-sm font-medium text-gray-400 mb-2">Ticket Name</label>
+                                            <input
+                                                type="text"
+                                                placeholder="e.g. VIP Access"
+                                                required
+                                                className="premium-input w-full"
+                                                value={newTicket.name}
+                                                onChange={(e) => setNewTicket({ ...newTicket, name: e.target.value })}
+                                            />
                                         </div>
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
-                                                <label className="block text-sm font-medium text-zinc-400 mb-2">Price (৳)</label>
-                                                <input type="number" step="0.01" required placeholder="0.00" className="w-full bg-black border border-zinc-800 rounded-lg p-3 text-white focus:outline-none focus:border-pink-500 transition-colors" value={newTicket.price} onChange={(e) => setNewTicket({ ...newTicket, price: e.target.value })} />
+                                                <label className="block text-sm font-medium text-gray-400 mb-2">Price (৳)</label>
+                                                <input
+                                                    type="number"
+                                                    step="0.01"
+                                                    required
+                                                    placeholder="0.00"
+                                                    className="premium-input w-full"
+                                                    value={newTicket.price}
+                                                    onChange={(e) => setNewTicket({ ...newTicket, price: e.target.value })}
+                                                />
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium text-zinc-400 mb-2">Quantity</label>
-                                                <input type="number" required placeholder="100" className="w-full bg-black border border-zinc-800 rounded-lg p-3 text-white focus:outline-none focus:border-pink-500 transition-colors" value={newTicket.quantity} onChange={(e) => setNewTicket({ ...newTicket, quantity: e.target.value })} />
+                                                <label className="block text-sm font-medium text-gray-400 mb-2">Quantity</label>
+                                                <input
+                                                    type="number"
+                                                    required
+                                                    placeholder="100"
+                                                    className="premium-input w-full"
+                                                    value={newTicket.quantity}
+                                                    onChange={(e) => setNewTicket({ ...newTicket, quantity: e.target.value })}
+                                                />
                                             </div>
                                         </div>
-                                        <button type="submit" disabled={submitting} className="w-full bg-gradient-to-r from-pink-500 to-indigo-500 text-white font-bold py-3 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 mt-2">
-                                            {submitting ? 'Adding...' : 'Add Ticket Type'}
+                                        <button
+                                            type="submit"
+                                            disabled={submitting}
+                                            className="w-full gradient-btn py-3 rounded-xl font-bold disabled:opacity-50"
+                                        >
+                                            {submitting ? 'Adding...' : '+ Add Ticket Type'}
                                         </button>
                                     </form>
                                 </div>
 
-                                {/* Sponsor Form */}
-                                <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
-                                    <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
-                                        <span>🤝</span> Add Sponsor
-                                    </h3>
+                                {/* Add Sponsor Form */}
+                                <div className="glass-strong rounded-3xl p-6">
+                                    <div className="flex items-center gap-3 mb-6">
+                                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-lg">
+                                            🤝
+                                        </div>
+                                        <h3 className="text-lg font-bold text-white">Add Sponsor</h3>
+                                    </div>
                                     <form onSubmit={handleAddSponsor} className="space-y-4">
                                         <div>
-                                            <label className="block text-sm font-medium text-zinc-400 mb-2">Sponsor Name</label>
-                                            <input type="text" required className="w-full bg-black border border-zinc-800 rounded-lg p-3 text-white focus:outline-none focus:border-pink-500 transition-colors" value={newSponsor.name} onChange={e => setNewSponsor({ ...newSponsor, name: e.target.value })} />
+                                            <label className="block text-sm font-medium text-gray-400 mb-2">Sponsor Name</label>
+                                            <input
+                                                type="text"
+                                                required
+                                                className="premium-input w-full"
+                                                value={newSponsor.name}
+                                                onChange={e => setNewSponsor({ ...newSponsor, name: e.target.value })}
+                                            />
                                         </div>
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
-                                                <label className="block text-sm font-medium text-zinc-400 mb-2">Tier</label>
-                                                <select className="w-full bg-black border border-zinc-800 rounded-lg p-3 text-white focus:outline-none focus:border-pink-500 transition-colors" value={newSponsor.tier} onChange={e => setNewSponsor({ ...newSponsor, tier: e.target.value })}>
-                                                    <option>Partner</option> <option>Bronze</option> <option>Silver</option> <option>Gold</option>
+                                                <label className="block text-sm font-medium text-gray-400 mb-2">Tier</label>
+                                                <select
+                                                    className="premium-input w-full"
+                                                    value={newSponsor.tier}
+                                                    onChange={e => setNewSponsor({ ...newSponsor, tier: e.target.value })}
+                                                >
+                                                    <option>Partner</option>
+                                                    <option>Bronze</option>
+                                                    <option>Silver</option>
+                                                    <option>Gold</option>
                                                 </select>
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium text-zinc-400 mb-2">Amount</label>
-                                                <input type="number" min="0" max="99999999.99" step="0.01" className="w-full bg-black border border-zinc-800 rounded-lg p-3 text-white focus:outline-none focus:border-pink-500 transition-colors" value={newSponsor.contribution} onChange={e => setNewSponsor({ ...newSponsor, contribution: e.target.value })} placeholder="Enter amount in ৳" />
+                                                <label className="block text-sm font-medium text-gray-400 mb-2">Amount (৳)</label>
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    step="0.01"
+                                                    className="premium-input w-full"
+                                                    value={newSponsor.contribution}
+                                                    onChange={e => setNewSponsor({ ...newSponsor, contribution: e.target.value })}
+                                                />
                                             </div>
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-zinc-400 mb-2">Logo</label>
-                                            <input type="file" accept="image/*" onChange={e => e.target.files && setNewSponsor({ ...newSponsor, logo: e.target.files[0] })} className="w-full text-xs text-zinc-500 file:mr-2 file:py-1 file:px-2 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-zinc-800 file:text-white" />
+                                            <label className="block text-sm font-medium text-gray-400 mb-2">Logo</label>
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={e => e.target.files && setNewSponsor({ ...newSponsor, logo: e.target.files[0] })}
+                                                className="w-full text-sm text-gray-400"
+                                            />
                                         </div>
-                                        <button type="submit" disabled={sponsorLoading} className="w-full bg-zinc-800 hover:bg-zinc-700 text-white font-bold py-3 rounded-lg transition-opacity disabled:opacity-50 mt-2">
-                                            {sponsorLoading ? 'Adding...' : 'Add Sponsor'}
+                                        <button
+                                            type="submit"
+                                            disabled={sponsorLoading}
+                                            className="w-full glass py-3 rounded-xl font-bold hover:bg-white/10 transition-colors disabled:opacity-50"
+                                        >
+                                            {sponsorLoading ? 'Adding...' : '+ Add Sponsor'}
                                         </button>
                                     </form>
                                 </div>
+
+                                {/* Pending Sponsor Requests */}
+                                {sponsors.filter(s => s.status === 'PENDING').length > 0 && (
+                                    <div className="glass-strong rounded-3xl p-6">
+                                        <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                                            <span className="text-yellow-500">⏳</span>
+                                            Pending Requests ({sponsors.filter(s => s.status === 'PENDING').length})
+                                        </h3>
+                                        <div className="space-y-4">
+                                            {sponsors.filter(s => s.status === 'PENDING').map((s: any) => (
+                                                <div key={s.sponsor_id} className="premium-card p-4">
+                                                    <div className="flex items-center gap-3 mb-3">
+                                                        {s.logo_url && <img src={s.logo_url} className="w-8 h-8 object-contain rounded" />}
+                                                        <div>
+                                                            <h4 className="font-bold text-white text-sm">{s.name}</h4>
+                                                            <p className="text-xs text-gray-500">{s.tier} • ৳{s.contribution_amount}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <button
+                                                            onClick={async () => {
+                                                                await fetch('/api/sponsors', {
+                                                                    method: 'PUT',
+                                                                    headers: { 'Content-Type': 'application/json' },
+                                                                    body: JSON.stringify({ sponsor_id: s.sponsor_id, status: 'APPROVED' })
+                                                                });
+                                                                fetchData(id as string);
+                                                            }}
+                                                            className="py-2 rounded-lg bg-green-500/20 text-green-400 text-sm font-semibold hover:bg-green-500 hover:text-white transition-colors"
+                                                        >
+                                                            ✓ Approve
+                                                        </button>
+                                                        <button
+                                                            onClick={async () => {
+                                                                await fetch('/api/sponsors', {
+                                                                    method: 'PUT',
+                                                                    headers: { 'Content-Type': 'application/json' },
+                                                                    body: JSON.stringify({ sponsor_id: s.sponsor_id, status: 'REJECTED' })
+                                                                });
+                                                                fetchData(id as string);
+                                                            }}
+                                                            className="py-2 rounded-lg bg-red-500/20 text-red-400 text-sm font-semibold hover:bg-red-500 hover:text-white transition-colors"
+                                                        >
+                                                            ✕ Reject
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </>
                         ) : (
-                            <div className="space-y-6">
-                                {/* Ticket Selection UI (For Attendees) */}
-                                <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
-                                    <h3 className="text-lg font-bold text-white mb-6">Select Tickets</h3>
+                            <>
+                                {/* Buy Tickets (Attendee View) */}
+                                <div className="glass-strong rounded-3xl p-6">
+                                    <div className="flex items-center gap-3 mb-6">
+                                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center text-lg">
+                                            🎫
+                                        </div>
+                                        <h3 className="text-lg font-bold text-white">Get Tickets</h3>
+                                    </div>
+
                                     {ticketTypes.length === 0 ? (
-                                        <p className="text-zinc-500">Tickets not yet available.</p>
+                                        <div className="text-center py-8 glass rounded-xl">
+                                            <p className="text-gray-400">Tickets not yet available</p>
+                                        </div>
                                     ) : (
                                         <div className="space-y-4">
                                             {ticketTypes.map((ticket) => (
-                                                <div key={ticket.ticket_type_id} className="p-4 bg-black border border-zinc-800 rounded-xl">
-                                                    <div className="flex justify-between mb-2">
+                                                <div key={ticket.ticket_type_id} className="premium-card p-4">
+                                                    <div className="flex justify-between items-center mb-3">
                                                         <span className="font-bold text-white">{ticket.name}</span>
-                                                        <span className="text-white font-mono">৳{Number(ticket.price).toFixed(2)}</span>
+                                                        <span className="text-xl font-black text-gradient">৳{Number(ticket.price).toFixed(0)}</span>
                                                     </div>
-                                                    <p className="text-xs text-zinc-500 mb-4">{ticket.quantity} remaining</p>
+                                                    <p className="text-xs text-gray-500 mb-4">{ticket.quantity} remaining</p>
                                                     <button
                                                         onClick={async () => {
                                                             if (!confirm(`Book ${ticket.name} for ৳${ticket.price}?`)) return;
@@ -447,7 +659,6 @@ export default function EventDetails() {
                                                                 });
                                                                 if (res.ok) {
                                                                     alert('Ticket Booked Successfully! View in "My Tickets".');
-                                                                    // Refresh ticket count
                                                                     fetchData(id as string);
                                                                 } else {
                                                                     alert('Booking Failed');
@@ -458,9 +669,9 @@ export default function EventDetails() {
                                                             }
                                                         }}
                                                         disabled={ticket.quantity <= 0}
-                                                        className="w-full bg-white text-black font-bold py-2 rounded-lg hover:bg-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                        className="w-full gradient-btn py-3 rounded-xl font-bold disabled:opacity-50 disabled:cursor-not-allowed"
                                                     >
-                                                        {ticket.quantity > 0 ? 'Buy Ticket' : 'Sold Out'}
+                                                        {ticket.quantity > 0 ? '🎟️ Buy Ticket' : '❌ Sold Out'}
                                                     </button>
                                                 </div>
                                             ))}
@@ -468,73 +679,74 @@ export default function EventDetails() {
                                     )}
                                 </div>
 
-                                {/* Sponsor Application Form */}
-                                <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
-                                    <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
-                                        <span>🤝</span> Become a Sponsor
-                                    </h3>
-                                    <p className="text-zinc-500 text-sm mb-4">Interested in sponsoring this event? Submit an application.</p>
+                                {/* Become Sponsor Form */}
+                                <div className="glass-strong rounded-3xl p-6">
+                                    <div className="flex items-center gap-3 mb-6">
+                                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-lg">
+                                            🤝
+                                        </div>
+                                        <div>
+                                            <h3 className="text-lg font-bold text-white">Become a Sponsor</h3>
+                                            <p className="text-xs text-gray-400">Support this event</p>
+                                        </div>
+                                    </div>
                                     <form onSubmit={handleAddSponsor} className="space-y-4">
                                         <div>
-                                            <label className="block text-sm font-medium text-zinc-400 mb-2">Sponsor/Company Name</label>
-                                            <input type="text" required className="w-full bg-black border border-zinc-800 rounded-lg p-3 text-white focus:outline-none focus:border-pink-500 transition-colors" value={newSponsor.name} onChange={e => setNewSponsor({ ...newSponsor, name: e.target.value })} />
+                                            <label className="block text-sm font-medium text-gray-400 mb-2">Company Name</label>
+                                            <input
+                                                type="text"
+                                                required
+                                                className="premium-input w-full"
+                                                value={newSponsor.name}
+                                                onChange={e => setNewSponsor({ ...newSponsor, name: e.target.value })}
+                                            />
                                         </div>
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
-                                                <label className="block text-sm font-medium text-zinc-400 mb-2">Tier</label>
-                                                <select className="w-full bg-black border border-zinc-800 rounded-lg p-3 text-white focus:outline-none focus:border-pink-500 transition-colors" value={newSponsor.tier} onChange={e => setNewSponsor({ ...newSponsor, tier: e.target.value })}>
-                                                    <option>Partner</option> <option>Bronze</option> <option>Silver</option> <option>Gold</option>
+                                                <label className="block text-sm font-medium text-gray-400 mb-2">Tier</label>
+                                                <select
+                                                    className="premium-input w-full"
+                                                    value={newSponsor.tier}
+                                                    onChange={e => setNewSponsor({ ...newSponsor, tier: e.target.value })}
+                                                >
+                                                    <option>Partner</option>
+                                                    <option>Bronze</option>
+                                                    <option>Silver</option>
+                                                    <option>Gold</option>
                                                 </select>
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium text-zinc-400 mb-2">Contribution (৳)</label>
-                                                <input type="number" min="0" max="99999999.99" step="0.01" required className="w-full bg-black border border-zinc-800 rounded-lg p-3 text-white focus:outline-none focus:border-pink-500 transition-colors" value={newSponsor.contribution} onChange={e => setNewSponsor({ ...newSponsor, contribution: e.target.value })} placeholder="Enter amount in ৳" />
+                                                <label className="block text-sm font-medium text-gray-400 mb-2">Amount (৳)</label>
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    step="0.01"
+                                                    required
+                                                    className="premium-input w-full"
+                                                    value={newSponsor.contribution}
+                                                    onChange={e => setNewSponsor({ ...newSponsor, contribution: e.target.value })}
+                                                />
                                             </div>
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-zinc-400 mb-2">Logo (Optional)</label>
-                                            <input type="file" accept="image/*" onChange={e => e.target.files && setNewSponsor({ ...newSponsor, logo: e.target.files[0] })} className="w-full text-xs text-zinc-500 file:mr-2 file:py-1 file:px-2 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-zinc-800 file:text-white" />
+                                            <label className="block text-sm font-medium text-gray-400 mb-2">Logo (Optional)</label>
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={e => e.target.files && setNewSponsor({ ...newSponsor, logo: e.target.files[0] })}
+                                                className="w-full text-sm text-gray-400"
+                                            />
                                         </div>
-                                        <button type="submit" disabled={sponsorLoading} className="w-full bg-gradient-to-r from-pink-500 to-indigo-500 text-white font-bold py-3 rounded-lg transition-opacity disabled:opacity-50 mt-2">
-                                            {sponsorLoading ? 'Submitting...' : 'Submit Application'}
+                                        <button
+                                            type="submit"
+                                            disabled={sponsorLoading}
+                                            className="w-full gradient-btn py-3 rounded-xl font-bold disabled:opacity-50"
+                                        >
+                                            {sponsorLoading ? 'Submitting...' : '📤 Submit Application'}
                                         </button>
                                     </form>
                                 </div>
-                            </div>
-                        )}
-
-                        {/* Organizer: Manage Sponsor Requests */}
-                        {isOrganizer && (
-                            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 mt-6">
-                                <h3 className="text-lg font-bold text-white mb-4">Sponsor Requests</h3>
-                                {sponsors.filter((s: any) => s.status === 'PENDING').length === 0 ? (
-                                    <p className="text-zinc-500 text-sm">No pending requests.</p>
-                                ) : (
-                                    <div className="space-y-4">
-                                        {sponsors.filter((s: any) => s.status === 'PENDING').map((s: any) => (
-                                            <div key={s.sponsor_id} className="p-4 bg-black border border-zinc-800 rounded-xl">
-                                                <div className="flex items-center gap-3 mb-3">
-                                                    {s.logo_url && <img src={s.logo_url} className="w-8 h-8 object-contain" />}
-                                                    <div>
-                                                        <h4 className="font-bold text-white text-sm">{s.name}</h4>
-                                                        <p className="text-xs text-zinc-500">{s.tier} • ৳{s.contribution_amount}</p>
-                                                    </div>
-                                                </div>
-                                                <div className="grid grid-cols-2 gap-2">
-                                                    <button onClick={async () => {
-                                                        await fetch('/api/sponsors', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sponsor_id: s.sponsor_id, status: 'APPROVED' }) });
-                                                        fetchData(id as string);
-                                                    }} className="bg-green-500/20 text-green-500 text-xs py-1 rounded hover:bg-green-500 hover:text-white transition">Approve</button>
-                                                    <button onClick={async () => {
-                                                        await fetch('/api/sponsors', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sponsor_id: s.sponsor_id, status: 'REJECTED' }) });
-                                                        fetchData(id as string);
-                                                    }} className="bg-red-500/20 text-red-500 text-xs py-1 rounded hover:bg-red-500 hover:text-white transition">Reject</button>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
+                            </>
                         )}
                     </div>
                 </div>
@@ -543,6 +755,7 @@ export default function EventDetails() {
     );
 }
 
+// Event Updates Component
 function EventUpdates({ eventId, user, isOrganizer }: { eventId: string, user: any, isOrganizer: boolean }) {
     const [posts, setPosts] = useState<any[]>([]);
     const [content, setContent] = useState('');
@@ -587,19 +800,28 @@ function EventUpdates({ eventId, user, isOrganizer }: { eventId: string, user: a
 
     return (
         <div>
-            <h2 className="text-xl font-bold text-white mb-6">Updates & News 📢</h2>
+            <div className="flex items-center gap-3 mb-6">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center text-xl">
+                    📢
+                </div>
+                <div>
+                    <h2 className="text-xl font-bold text-white">Updates & News</h2>
+                    <p className="text-gray-400 text-sm">Latest announcements from the organizer</p>
+                </div>
+            </div>
 
             {isOrganizer && (
-                <form onSubmit={handleCreatePost} className="mb-8 bg-zinc-900 border border-zinc-800 p-4 rounded-xl">
+                <form onSubmit={handleCreatePost} className="mb-8 glass rounded-2xl p-4">
                     <textarea
-                        className="w-full bg-black border border-zinc-700 rounded-lg p-3 text-zinc-300 mb-3 focus:outline-none focus:border-pink-500"
+                        className="premium-input w-full mb-3 resize-none"
                         placeholder="Post an update for your attendees..."
                         value={content}
                         onChange={e => setContent(e.target.value)}
                         required
+                        rows={3}
                     />
                     <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-3">
                             <input
                                 type="file"
                                 accept="image/*"
@@ -607,13 +829,20 @@ function EventUpdates({ eventId, user, isOrganizer }: { eventId: string, user: a
                                 className="hidden"
                                 onChange={e => e.target.files && setImage(e.target.files[0])}
                             />
-                            <label htmlFor="post-image" className="cursor-pointer text-zinc-400 hover:text-white flex items-center gap-1 text-sm">
-                                📷 {image ? <span className="text-green-500">{image.name}</span> : 'Add Photo'}
+                            <label htmlFor="post-image" className="cursor-pointer text-gray-400 hover:text-white flex items-center gap-2 text-sm glass px-3 py-2 rounded-lg">
+                                📷 {image ? <span className="text-green-400">{image.name}</span> : 'Add Photo'}
                             </label>
-                            {image && <button type="button" onClick={() => setImage(null)} className="text-red-500 text-xs hover:underline">Remove</button>}
+                            {image && (
+                                <button type="button" onClick={() => setImage(null)} className="text-red-400 text-sm hover:underline">
+                                    Remove
+                                </button>
+                            )}
                         </div>
-                        <button disabled={posting} className="bg-gradient-to-r from-pink-500 to-indigo-500 text-white px-6 py-2 rounded-lg font-bold text-sm hover:opacity-90">
-                            {posting ? 'Posting...' : 'Post Update'}
+                        <button
+                            disabled={posting}
+                            className="gradient-btn px-6 py-2 rounded-xl font-bold text-sm disabled:opacity-50"
+                        >
+                            {posting ? 'Posting...' : '📤 Post Update'}
                         </button>
                     </div>
                 </form>
@@ -621,7 +850,10 @@ function EventUpdates({ eventId, user, isOrganizer }: { eventId: string, user: a
 
             <div className="space-y-6">
                 {posts.length === 0 ? (
-                    <p className="text-zinc-500 italic text-center">No updates yet.</p>
+                    <div className="text-center py-12 glass rounded-2xl">
+                        <div className="text-4xl mb-3">📭</div>
+                        <p className="text-gray-400">No updates yet</p>
+                    </div>
                 ) : (
                     posts.map(post => (
                         <PostCard key={post.post_id} post={post} user={user} refresh={fetchPosts} />
@@ -632,6 +864,7 @@ function EventUpdates({ eventId, user, isOrganizer }: { eventId: string, user: a
     );
 }
 
+// Post Card Component
 function PostCard({ post, user, refresh }: { post: any, user: any, refresh: () => void }) {
     const [commenting, setCommenting] = useState(false);
     const [commentText, setCommentText] = useState('');
@@ -658,56 +891,85 @@ function PostCard({ post, user, refresh }: { post: any, user: any, refresh: () =
     };
 
     return (
-        <div className="bg-black border border-zinc-800 p-4 rounded-xl">
-            <div className="flex items-center gap-3 mb-3">
-                <div className="w-8 h-8 rounded-full bg-zinc-800 overflow-hidden">
-                    {post.author_image ? <img src={post.author_image} className="w-full h-full object-cover" /> : <div className="text-center pt-1">👤</div>}
+        <div className="premium-card p-6">
+            {/* Author Info */}
+            <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 p-0.5">
+                    <div className="w-full h-full rounded-full bg-black overflow-hidden flex items-center justify-center">
+                        {post.author_image ? (
+                            <img src={post.author_image} className="w-full h-full object-cover" />
+                        ) : (
+                            <span>👤</span>
+                        )}
+                    </div>
                 </div>
                 <div>
                     <h4 className="text-sm font-bold text-white">{post.author_name}</h4>
-                    <span className="text-xs text-zinc-500">{new Date(post.created_at).toLocaleString()}</span>
+                    <span className="text-xs text-gray-500">{new Date(post.created_at).toLocaleString()}</span>
                 </div>
             </div>
 
-            <p className="text-zinc-300 text-sm mb-4 whitespace-pre-wrap">{post.content}</p>
-            {post.image_url && <img src={post.image_url} className="w-full rounded-lg mb-4" />}
+            {/* Content */}
+            <p className="text-gray-300 text-sm mb-4 whitespace-pre-wrap leading-relaxed">{post.content}</p>
+            {post.image_url && (
+                <img src={post.image_url} className="w-full rounded-xl mb-4" alt="Post" />
+            )}
 
-            <div className="flex items-center gap-6 text-sm text-zinc-400 border-t border-zinc-800 pt-3">
-                <button onClick={handleLike} className={`flex items-center gap-1 hover:text-pink-500 ${post.is_liked ? 'text-pink-500' : ''}`}>
-                    <span>{post.is_liked ? '❤️' : '🤍'}</span> {post.like_count} Likes
+            {/* Actions */}
+            <div className="flex items-center gap-6 text-sm text-gray-400 border-t border-white/10 pt-4">
+                <button
+                    onClick={handleLike}
+                    className={`flex items-center gap-2 hover:text-pink-400 transition-colors ${post.is_liked ? 'text-pink-500' : ''}`}
+                >
+                    <span className="text-lg">{post.is_liked ? '❤️' : '🤍'}</span>
+                    {post.like_count} Likes
                 </button>
-                <button onClick={() => setCommenting(!commenting)} className="hover:text-white">
-                    💬 {post.comments.length} Comments
+                <button
+                    onClick={() => setCommenting(!commenting)}
+                    className="flex items-center gap-2 hover:text-white transition-colors"
+                >
+                    <span className="text-lg">💬</span>
+                    {post.comments?.length || 0} Comments
                 </button>
             </div>
 
             {/* Comments Section */}
-            {(commenting || post.comments.length > 0) && (
-                <div className="mt-4 bg-zinc-900/50 p-3 rounded-lg space-y-3">
-                    {post.comments.map((c: any) => (
-                        <div key={c.comment_id} className="flex gap-2">
-                            <div className="w-6 h-6 rounded-full bg-zinc-800 overflow-hidden flex-shrink-0">
-                                {c.profile_image ? <img src={c.profile_image} className="w-full h-full object-cover" /> : <div className="text-[10px] text-center pt-1">👤</div>}
+            {(commenting || (post.comments && post.comments.length > 0)) && (
+                <div className="mt-4 glass rounded-xl p-4 space-y-4">
+                    {post.comments?.map((c: any) => (
+                        <div key={c.comment_id} className="flex gap-3">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 p-0.5 flex-shrink-0">
+                                <div className="w-full h-full rounded-full bg-black overflow-hidden flex items-center justify-center text-xs">
+                                    {c.profile_image ? (
+                                        <img src={c.profile_image} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <span>👤</span>
+                                    )}
+                                </div>
                             </div>
                             <div>
-                                <div className="bg-zinc-800 px-3 py-2 rounded-lg rounded-tl-none">
+                                <div className="glass px-3 py-2 rounded-xl rounded-tl-none">
                                     <span className="text-xs font-bold text-white block mb-1">{c.user_name}</span>
-                                    <p className="text-xs text-zinc-300">{c.content}</p>
+                                    <p className="text-xs text-gray-300">{c.content}</p>
                                 </div>
-                                <span className="text-[10px] text-zinc-600 block mt-1">{new Date(c.created_at).toLocaleString()}</span>
+                                <span className="text-[10px] text-gray-600 block mt-1">
+                                    {new Date(c.created_at).toLocaleString()}
+                                </span>
                             </div>
                         </div>
                     ))}
 
                     {commenting && (
-                        <form onSubmit={handleComment} className="flex gap-2 mt-2">
+                        <form onSubmit={handleComment} className="flex gap-2 mt-3">
                             <input
-                                className="flex-1 bg-black border border-zinc-700 rounded px-3 py-1 text-sm text-white"
+                                className="flex-1 premium-input text-sm"
                                 placeholder="Write a comment..."
                                 value={commentText}
                                 onChange={e => setCommentText(e.target.value)}
                             />
-                            <button className="text-xs bg-indigo-500 text-white px-3 rounded hover:bg-indigo-600">Post</button>
+                            <button className="gradient-btn px-4 rounded-xl text-sm font-semibold">
+                                Post
+                            </button>
                         </form>
                     )}
                 </div>

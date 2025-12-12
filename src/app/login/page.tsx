@@ -2,6 +2,7 @@
 
 import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 
 function LoginForm() {
     const router = useRouter();
@@ -35,8 +36,6 @@ function LoginForm() {
                 throw new Error(data.message || 'Something went wrong');
             }
 
-            // Login success
-            // In a real app, you might save the user to Context or LocalStorage here
             localStorage.setItem('user', JSON.stringify(data.user));
             router.push('/dashboard');
         } catch (err: any) {
@@ -47,69 +46,119 @@ function LoginForm() {
     };
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-black p-4 text-white">
-            <div className="w-full max-w-md rounded-2xl bg-zinc-900 p-8 shadow-xl border border-zinc-800">
-                <h1 className="mb-2 text-3xl font-bold text-center bg-gradient-to-r from-indigo-500 to-pink-500 bg-clip-text text-transparent">
-                    Welcome Back
-                </h1>
-                <p className="mb-8 text-center text-zinc-400">Login to Event Koi</p>
+        <div className="relative min-h-screen animated-gradient-bg text-white overflow-hidden">
+            {/* Floating Orbs */}
+            <div className="floating-orb orb-1" />
+            <div className="floating-orb orb-2" />
 
-                {registered && (
-                    <div className="mb-4 rounded-lg bg-green-500/10 p-3 text-sm text-green-500 border border-green-500/20 text-center">
-                        Account created! Please log in.
+            {/* Particles */}
+            <div className="particles">
+                {[...Array(15)].map((_, i) => (
+                    <div
+                        key={i}
+                        className="particle"
+                        style={{
+                            left: `${Math.random() * 100}%`,
+                            animationDelay: `${Math.random() * 15}s`,
+                            animationDuration: `${15 + Math.random() * 10}s`,
+                        }}
+                    />
+                ))}
+            </div>
+
+            <div className="relative z-10 flex min-h-screen items-center justify-center p-6">
+                <div className="w-full max-w-md">
+                    {/* Logo */}
+                    <Link href="/" className="block text-center mb-8">
+                        <h1 className="text-4xl font-black text-gradient-glow">Event Koi</h1>
+                    </Link>
+
+                    {/* Login Card */}
+                    <div className="glass-strong rounded-3xl p-8 shadow-2xl">
+                        <div className="text-center mb-8">
+                            <h2 className="text-3xl font-bold text-white mb-2">Welcome Back</h2>
+                            <p className="text-gray-400">Sign in to continue to your dashboard</p>
+                        </div>
+
+                        {registered && (
+                            <div className="mb-6 rounded-xl bg-green-500/10 p-4 text-sm text-green-400 border border-green-500/20 text-center flex items-center justify-center gap-2">
+                                <span className="text-lg">✅</span>
+                                <span>Account created successfully! Please log in.</span>
+                            </div>
+                        )}
+
+                        {error && (
+                            <div className="mb-6 rounded-xl bg-red-500/10 p-4 text-sm text-red-400 border border-red-500/20 text-center flex items-center justify-center gap-2">
+                                <span className="text-lg">⚠️</span>
+                                <span>{error}</span>
+                            </div>
+                        )}
+
+                        <form onSubmit={handleSubmit} className="space-y-5">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-400 mb-2">
+                                    Email Address
+                                </label>
+                                <input
+                                    type="email"
+                                    required
+                                    className="premium-input w-full"
+                                    placeholder="you@example.com"
+                                    value={formData.email}
+                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-400 mb-2">
+                                    Password
+                                </label>
+                                <input
+                                    type="password"
+                                    required
+                                    className="premium-input w-full"
+                                    placeholder="••••••••"
+                                    value={formData.password}
+                                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                />
+                            </div>
+
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="w-full gradient-btn py-4 rounded-xl font-bold text-white text-lg disabled:opacity-50 disabled:cursor-not-allowed mt-6"
+                            >
+                                {loading ? (
+                                    <span className="flex items-center justify-center gap-2">
+                                        <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                        </svg>
+                                        Signing In...
+                                    </span>
+                                ) : (
+                                    'Sign In →'
+                                )}
+                            </button>
+                        </form>
+
+                        <div className="mt-8 pt-6 border-t border-white/10 text-center">
+                            <p className="text-gray-400">
+                                Don&apos;t have an account?{' '}
+                                <Link href="/register" className="text-gradient font-semibold hover:underline">
+                                    Create one
+                                </Link>
+                            </p>
+                        </div>
                     </div>
-                )}
 
-                {error && (
-                    <div className="mb-4 rounded-lg bg-red-500/10 p-3 text-sm text-red-500 border border-red-500/20 text-center">
-                        {error}
+                    {/* Back to home */}
+                    <div className="mt-8 text-center">
+                        <Link href="/" className="text-gray-500 hover:text-white transition-colors text-sm">
+                            ← Back to Home
+                        </Link>
                     </div>
-                )}
-
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                        <label className="mb-1 block text-sm font-medium text-zinc-400">
-                            Email Address
-                        </label>
-                        <input
-                            type="email"
-                            required
-                            className="w-full rounded-lg bg-zinc-800 p-3 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                            placeholder="john@example.com"
-                            value={formData.email}
-                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        />
-                    </div>
-
-                    <div>
-                        <label className="mb-1 block text-sm font-medium text-zinc-400">
-                            Password
-                        </label>
-                        <input
-                            type="password"
-                            required
-                            className="w-full rounded-lg bg-zinc-800 p-3 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                            placeholder="••••••••"
-                            value={formData.password}
-                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                        />
-                    </div>
-
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="mt-6 w-full rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 p-3 font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
-                    >
-                        {loading ? 'Logging in...' : 'Log In'}
-                    </button>
-                </form>
-
-                <p className="mt-6 text-center text-sm text-zinc-500">
-                    Don't have an account?{' '}
-                    <a href="/register" className="text-indigo-400 hover:text-indigo-300">
-                        Sign up
-                    </a>
-                </p>
+                </div>
             </div>
         </div>
     );
@@ -117,7 +166,11 @@ function LoginForm() {
 
 export default function LoginPage() {
     return (
-        <Suspense fallback={<div className="text-white text-center mt-20">Loading...</div>}>
+        <Suspense fallback={
+            <div className="min-h-screen animated-gradient-bg flex items-center justify-center">
+                <div className="text-white text-xl">Loading...</div>
+            </div>
+        }>
             <LoginForm />
         </Suspense>
     );
