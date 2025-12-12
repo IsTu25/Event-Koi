@@ -21,22 +21,22 @@ export async function GET(request: Request) {
             SELECT 
                 f.friendship_id,
                 f.status,
-                f.user_id_1,
-                f.user_id_2,
+                f.user_id,
+                f.friend_id,
                 u1.name as name_1, u1.profile_image as image_1,
                 u2.name as name_2, u2.profile_image as image_2
             FROM Friendships f
-            JOIN Users u1 ON f.user_id_1 = u1.id
-            JOIN Users u2 ON f.user_id_2 = u2.id
-            WHERE f.user_id_1 = ? OR f.user_id_2 = ?
+            JOIN Users u1 ON f.user_id = u1.id
+            JOIN Users u2 ON f.friend_id = u2.id
+            WHERE f.user_id = ? OR f.friend_id = ?
         `;
 
         const [rows] = await pool.query(query, [userId, userId]);
 
         // Transform for frontend
         const friendships = (rows as any[]).map(row => {
-            const isSender = row.user_id_1 == userId;
-            const friendId = isSender ? row.user_id_2 : row.user_id_1;
+            const isSender = row.user_id == userId;
+            const friendId = isSender ? row.friend_id : row.user_id;
             const friendName = isSender ? row.name_2 : row.name_1;
             const friendImage = isSender ? row.image_2 : row.image_1;
 
@@ -65,7 +65,7 @@ export async function POST(request: Request) {
 
         // Check if exists
         const [existing] = await pool.query(
-            'SELECT * FROM Friendships WHERE (user_id_1 = ? AND user_id_2 = ?) OR (user_id_1 = ? AND user_id_2 = ?)',
+            'SELECT * FROM Friendships WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)',
             [user_id, friend_id, friend_id, user_id]
         );
 
@@ -74,7 +74,7 @@ export async function POST(request: Request) {
         }
 
         await pool.execute(
-            'INSERT INTO Friendships (user_id_1, user_id_2, status) VALUES (?, ?, "PENDING")',
+            'INSERT INTO Friendships (user_id, friend_id, status) VALUES (?, ?, "PENDING")',
             [user_id, friend_id]
         );
 
