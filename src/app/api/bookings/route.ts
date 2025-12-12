@@ -19,7 +19,7 @@ export async function POST(request: Request) {
 
             // 1. Insert Ticket
             const [result] = await connection.execute(
-                'INSERT INTO Tickets (user_id, event_id, ticket_type_id, unique_code) VALUES (?, ?, ?, ?)',
+                'INSERT INTO Bookings (user_id, event_id, ticket_type_id, unique_code) VALUES (?, ?, ?, ?)',
                 [user_id, event_id, ticket_type_id, unique_code]
             );
 
@@ -53,16 +53,16 @@ export async function GET(request: Request) {
     try {
         const query = `
             SELECT 
-                t.ticket_id, t.unique_code, t.status, t.purchase_date,
+                b.booking_id AS ticket_id, b.unique_code, b.status, b.created_at AS purchase_date,
                 e.title AS event_title, e.start_time, e.venue_id,
                 v.name AS venue_name, v.city AS venue_city,
                 tt.name AS ticket_name, tt.price
-            FROM Tickets t
-            JOIN Events e ON t.event_id = e.event_id
-            JOIN TicketTypes tt ON t.ticket_type_id = tt.ticket_type_id
+            FROM Bookings b
+            JOIN Events e ON b.event_id = e.event_id
+            JOIN TicketTypes tt ON b.ticket_type_id = tt.ticket_type_id
             LEFT JOIN Venues v ON e.venue_id = v.venue_id
-            WHERE t.user_id = ?
-            ORDER BY t.purchase_date DESC
+            WHERE b.user_id = ?
+            ORDER BY b.created_at DESC
         `;
         const [rows] = await pool.query(query, [user_id]);
         return NextResponse.json(rows);

@@ -31,8 +31,8 @@ export async function POST(request: Request) {
             }
         }
 
-        const query = `INSERT INTO Sponsors (event_id, name, contribution_amount, tier, logo_url, user_id, status) VALUES (?, ?, ?, ?, ?, ?, ?)`;
-        const [result] = await pool.execute(query, [event_id, name, contribution || 0, tier || 'Partner', logoPath, user_id || null, status]);
+        const query = `INSERT INTO Sponsors (event_id, name, contribution_amount, tier, logo_url, status) VALUES (?, ?, ?, ?, ?, ?)`;
+        const [result] = await pool.execute(query, [event_id, name, contribution || 0, tier || 'Partner', logoPath, status]);
 
         return NextResponse.json({ message: 'Sponsor added', sponsorId: (result as any).insertId });
     } catch (error) {

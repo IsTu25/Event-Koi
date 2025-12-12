@@ -418,7 +418,88 @@ export default function EventDetails() {
                             </>
                         ) : (
                             <div className="space-y-6">
-                                {/* Ticket Selection UI (Existing) */}
+                                {/* Ticket Selection UI (For Attendees) */}
+                                <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
+                                    <h3 className="text-lg font-bold text-white mb-6">Select Tickets</h3>
+                                    {ticketTypes.length === 0 ? (
+                                        <p className="text-zinc-500">Tickets not yet available.</p>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            {ticketTypes.map((ticket) => (
+                                                <div key={ticket.ticket_type_id} className="p-4 bg-black border border-zinc-800 rounded-xl">
+                                                    <div className="flex justify-between mb-2">
+                                                        <span className="font-bold text-white">{ticket.name}</span>
+                                                        <span className="text-white font-mono">৳{Number(ticket.price).toFixed(2)}</span>
+                                                    </div>
+                                                    <p className="text-xs text-zinc-500 mb-4">{ticket.quantity} remaining</p>
+                                                    <button
+                                                        onClick={async () => {
+                                                            if (!confirm(`Book ${ticket.name} for ৳${ticket.price}?`)) return;
+                                                            try {
+                                                                const res = await fetch('/api/bookings', {
+                                                                    method: 'POST',
+                                                                    headers: { 'Content-Type': 'application/json' },
+                                                                    body: JSON.stringify({
+                                                                        user_id: user.id,
+                                                                        event_id: id,
+                                                                        ticket_type_id: ticket.ticket_type_id
+                                                                    })
+                                                                });
+                                                                if (res.ok) {
+                                                                    alert('Ticket Booked Successfully! View in "My Tickets".');
+                                                                    // Refresh ticket count
+                                                                    fetchData(id as string);
+                                                                } else {
+                                                                    alert('Booking Failed');
+                                                                }
+                                                            } catch (e) {
+                                                                console.error(e);
+                                                                alert('Error booking ticket');
+                                                            }
+                                                        }}
+                                                        disabled={ticket.quantity <= 0}
+                                                        className="w-full bg-white text-black font-bold py-2 rounded-lg hover:bg-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    >
+                                                        {ticket.quantity > 0 ? 'Buy Ticket' : 'Sold Out'}
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Sponsor Application Form */}
+                                <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
+                                    <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+                                        <span>🤝</span> Become a Sponsor
+                                    </h3>
+                                    <p className="text-zinc-500 text-sm mb-4">Interested in sponsoring this event? Submit an application.</p>
+                                    <form onSubmit={handleAddSponsor} className="space-y-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-zinc-400 mb-2">Sponsor/Company Name</label>
+                                            <input type="text" required className="w-full bg-black border border-zinc-800 rounded-lg p-3 text-white focus:outline-none focus:border-pink-500 transition-colors" value={newSponsor.name} onChange={e => setNewSponsor({ ...newSponsor, name: e.target.value })} />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-zinc-400 mb-2">Tier</label>
+                                                <select className="w-full bg-black border border-zinc-800 rounded-lg p-3 text-white focus:outline-none focus:border-pink-500 transition-colors" value={newSponsor.tier} onChange={e => setNewSponsor({ ...newSponsor, tier: e.target.value })}>
+                                                    <option>Partner</option> <option>Bronze</option> <option>Silver</option> <option>Gold</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-zinc-400 mb-2">Contribution (৳)</label>
+                                                <input type="number" className="w-full bg-black border border-zinc-800 rounded-lg p-3 text-white focus:outline-none focus:border-pink-500 transition-colors" value={newSponsor.contribution} onChange={e => setNewSponsor({ ...newSponsor, contribution: e.target.value })} />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-zinc-400 mb-2">Logo (Optional)</label>
+                                            <input type="file" accept="image/*" onChange={e => e.target.files && setNewSponsor({ ...newSponsor, logo: e.target.files[0] })} className="w-full text-xs text-zinc-500 file:mr-2 file:py-1 file:px-2 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-zinc-800 file:text-white" />
+                                        </div>
+                                        <button type="submit" disabled={sponsorLoading} className="w-full bg-gradient-to-r from-pink-500 to-indigo-500 text-white font-bold py-3 rounded-lg transition-opacity disabled:opacity-50 mt-2">
+                                            {sponsorLoading ? 'Submitting...' : 'Submit Application'}
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
                         )}
 
