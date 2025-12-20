@@ -31,7 +31,8 @@ async function main() {
             '01_schema_tidb.sql',
             '02_procedures_triggers.sql',
             '03_views_indexes.sql',
-            '04_seed.sql'
+            '04_seed.sql',
+            '05_role_requests.sql'
         ];
 
         for (const file of files) {

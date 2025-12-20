@@ -59,7 +59,7 @@ export async function PUT(request: Request) {
             params.push(proofPath);
         }
 
-        query += ' WHERE id = ?';
+        query += ' WHERE user_id = ?';
         params.push(user_id);
 
         await pool.execute(query, params);
@@ -80,13 +80,13 @@ export async function GET(request: Request) {
     try {
         const [rows]: any = await pool.query(`
             SELECT 
-                u.id, u.name, u.email, u.role, u.phone, u.created_at, 
+                u.user_id as id, u.name, u.email, u.role, u.phone, u.created_at, 
                 u.profile_image, u.designation, u.is_verified, 
                 u.organization_id_card, u.proof_document,
-                (SELECT COUNT(*) FROM Events WHERE organizer_id = u.id) as events_organized,
-                (SELECT COUNT(DISTINCT event_id) FROM Tickets WHERE user_id = u.id AND status = 'VALID') as events_attended
+                (SELECT COUNT(*) FROM Events WHERE organizer_id = u.user_id) as events_organized,
+                (SELECT COUNT(DISTINCT event_id) FROM Bookings WHERE user_id = u.user_id AND status = 'VALID') as events_attended
             FROM Users u 
-            WHERE u.id = ?
+            WHERE u.user_id = ?
         `, [userId]);
         if (rows.length === 0) return NextResponse.json({ message: 'User not found' }, { status: 404 });
         return NextResponse.json(rows[0]);
