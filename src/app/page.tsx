@@ -16,6 +16,7 @@ import {
   Play,
   ArrowRight
 } from 'lucide-react';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 export default function LandingPage() {
   const { scrollYProgress } = useScroll();
@@ -26,7 +27,7 @@ export default function LandingPage() {
   });
 
   return (
-    <div className="relative min-h-screen bg-[#0B0F1A] text-white selection:bg-cyan-500/30 overflow-x-hidden font-sans">
+    <div className="relative min-h-screen bg-background text-foreground selection:bg-cyan-500/30 overflow-x-hidden font-sans">
 
       {/* Scroll Progress Bar */}
       <motion.div
@@ -70,22 +71,22 @@ function Navbar() {
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-      className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${scrolled ? 'py-4 bg-[#0B0F1A]/80 backdrop-blur-xl border-b border-white/5' : 'py-8 bg-transparent'}`}
+      className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${scrolled ? 'py-4 bg-background/80 backdrop-blur-xl border-b border-border-custom' : 'py-8 bg-transparent'}`}
     >
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 group">
           <div className="relative w-8 h-8">
             <span className="absolute inset-0 bg-gradient-to-tr from-cyan-400 to-orange-400 rounded-lg blur opacity-75 group-hover:opacity-100 transition-opacity" />
-            <div className="relative w-full h-full bg-[#0B0F1A] rounded-lg border border-white/10 flex items-center justify-center">
+            <div className="relative w-full h-full bg-background rounded-lg border border-border-custom flex items-center justify-center">
               <span className="text-transparent bg-clip-text bg-gradient-to-tr from-cyan-400 to-orange-400 font-bold text-lg">E</span>
             </div>
           </div>
-          <span className="font-bold text-xl tracking-tight">Event<span className="text-cyan-400">Koi</span></span>
+          <span className="font-bold text-xl tracking-tight">Event <span className="text-cyan-400">Ekhanei</span></span>
         </Link>
 
         <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-400">
           {['Features', 'Marketplace', 'Community', 'Pricing'].map((item) => (
-            <Link key={item} href={`#${item.toLowerCase()}`} className="hover:text-white transition-colors relative group">
+            <Link key={item} href={`#${item.toLowerCase()}`} className="hover:text-foreground transition-colors relative group">
               {item}
               <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-cyan-400 to-orange-400 transition-all group-hover:w-full" />
             </Link>
@@ -93,15 +94,16 @@ function Navbar() {
         </div>
 
         <div className="flex items-center gap-4">
-          <Link href="/login" className="text-sm font-medium text-gray-300 hover:text-white transition-colors">
+          <Link href="/login" className="text-sm font-medium text-gray-300 hover:text-foreground transition-colors">
             Log in
           </Link>
-          <Link href="/register" className="group relative px-5 py-2.5 rounded-full overflow-hidden bg-white/5 hover:bg-white/10 transition-colors border border-white/10">
+          <Link href="/register" className="group relative px-5 py-2.5 rounded-full overflow-hidden bg-white/5 hover:bg-white/10 transition-colors border border-border-custom">
             <span className="relative z-10 text-sm font-bold flex items-center gap-2">
               Get Started <ChevronRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
             </span>
             <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-orange-500/20 opacity-0 group-hover:opacity-100 transition-opacity" />
           </Link>
+          <ThemeToggle />
         </div>
       </div>
     </motion.nav>
@@ -160,7 +162,7 @@ function HeroSection() {
               <div className="absolute inset-0 bg-gradient-to-r from-cyan-300 to-cyan-500 opacity-0 group-hover:opacity-100 transition-opacity" />
             </Link>
 
-            <button className="px-8 py-4 rounded-full border border-white/10 hover:bg-white/5 transition-colors font-semibold flex items-center gap-2">
+            <button className="px-8 py-4 rounded-full border border-border-custom hover:bg-white/5 transition-colors font-semibold flex items-center gap-2">
               <Play className="w-4 h-4 fill-current" /> Watch Demo
             </button>
           </motion.div>
@@ -173,12 +175,12 @@ function HeroSection() {
           >
             <div className="flex -space-x-2">
               {[1, 2, 3, 4].map(i => (
-                <div key={i} className="w-8 h-8 rounded-full border-2 border-[#0B0F1A] bg-gray-800 flex items-center justify-center text-xs font-bold ring-2 ring-white/5">
+                <div key={i} className="w-8 h-8 rounded-full border-2 border-background bg-gray-800 flex items-center justify-center text-xs font-bold ring-2 ring-border-custom">
                   {String.fromCharCode(64 + i)}
                 </div>
               ))}
             </div>
-            <p>Trusted by <span className="text-white font-bold">2,000+</span> organizers</p>
+            <p>Trusted by <span className="text-foreground font-bold">2,000+</span> organizers</p>
           </motion.div>
         </div>
 
@@ -202,14 +204,14 @@ function HeroSection() {
               {/* Header */}
               <div className="h-1/3 bg-gradient-to-br from-cyan-500/20 to-purple-500/20 p-8 flex flex-col justify-between relative">
                 <div className="absolute top-0 right-0 p-8 opacity-20">
-                  <Zap className="w-24 h-24 text-white" />
+                  <Zap className="w-24 h-24 text-foreground" />
                 </div>
                 <div className="flex justify-between items-start">
                   <span className="text-xs font-mono uppercase tracking-widest text-cyan-300">V.I.P ACCESS</span>
                   <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
                 </div>
                 <div>
-                  <h2 className="text-3xl font-black text-white leading-none mb-1">UNREAL</h2>
+                  <h2 className="text-3xl font-black text-foreground leading-none mb-1">UNREAL</h2>
                   <h2 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-white">SUMMIT 2026</h2>
                 </div>
               </div>
@@ -219,8 +221,8 @@ function HeroSection() {
                 <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent absolute top-0" />
 
                 {/* QR Code Simulation */}
-                <div className="relative w-48 h-48 bg-white/5 rounded-2xl p-4 border border-white/10 mb-8 group overflow-hidden">
-                  <div className="absolute inset-0 bg-[url('https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=EventKoiDemo')] bg-center bg-no-repeat bg-contain opacity-80 mix-blend-lighten" />
+                <div className="relative w-48 h-48 bg-white/5 rounded-2xl p-4 border border-border-custom mb-8 group overflow-hidden">
+                  <div className="absolute inset-0 bg-[url('https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=EventEkhaneiDemo')] bg-center bg-no-repeat bg-contain opacity-80 mix-blend-lighten" />
                   <motion.div
                     animate={{ top: ['0%', '100%'] }}
                     transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
@@ -231,7 +233,7 @@ function HeroSection() {
                 <div className="w-full space-y-4">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-500">Holder</span>
-                    <span className="font-mono text-white">Isfak.eth</span>
+                    <span className="font-mono text-foreground">Isfak.eth</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-500">Seat</span>
@@ -242,9 +244,9 @@ function HeroSection() {
 
               {/* Perforated Bottom */}
               <div className="relative h-16 bg-black/20 flex items-center justify-between px-8">
-                <div className="absolute -top-3 left-4 w-6 h-6 rounded-full bg-[#0B0F1A]" />
-                <div className="absolute -top-3 right-4 w-6 h-6 rounded-full bg-[#0B0F1A]" />
-                <div className="w-full border-t-2 border-dashed border-white/10 absolute top-0 left-0" />
+                <div className="absolute -top-3 left-4 w-6 h-6 rounded-full bg-background" />
+                <div className="absolute -top-3 right-4 w-6 h-6 rounded-full bg-background" />
+                <div className="w-full border-t-2 border-dashed border-border-custom absolute top-0 left-0" />
                 <span className="font-mono text-[10px] text-gray-500">ID: 8X99-22BB-11AA</span>
                 <div className="flex gap-1">
                   {[1, 2, 3].map(i => <div key={i} className="w-1.5 h-1.5 rounded-full bg-white/20" />)}
@@ -295,7 +297,7 @@ function FeaturesBentoGrid() {
           className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 auto-rows-[250px]"
         >
           {/* Main Featured Item */}
-          <motion.div variants={item} className="md:col-span-2 md:row-span-2 rounded-[2rem] bg-[#161B2B] border border-white/5 p-8 relative overflow-hidden group hover:border-cyan-500/30 transition-colors">
+          <motion.div variants={item} className="md:col-span-2 md:row-span-2 rounded-[2rem] bg-card border border-border-custom p-8 relative overflow-hidden group hover:border-cyan-500/30 transition-colors">
             <div className="absolute top-0 right-0 p-10 opacity-10 group-hover:opacity-20 transition-opacity">
               <TrendingUp size={200} />
             </div>
@@ -324,7 +326,7 @@ function FeaturesBentoGrid() {
           </motion.div>
 
           {/* Smart Ticketing */}
-          <motion.div variants={item} className="md:col-span-1 md:row-span-2 rounded-[2rem] bg-[#161B2B] border border-white/5 p-8 relative overflow-hidden group hover:border-purple-500/30 transition-colors">
+          <motion.div variants={item} className="md:col-span-1 md:row-span-2 rounded-[2rem] bg-card border border-border-custom p-8 relative overflow-hidden group hover:border-purple-500/30 transition-colors">
             <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-purple-500/10 to-transparent" />
             <div className="w-12 h-12 rounded-2xl bg-purple-500/20 flex items-center justify-center text-purple-400 mb-6">
               <Ticket />
@@ -332,26 +334,26 @@ function FeaturesBentoGrid() {
             <h3 className="text-2xl font-bold mb-4">Smart Ticketing</h3>
             <p className="text-gray-400 text-sm mb-8">Generated QR codes with anti-fraud layers and dynamic validation.</p>
 
-            <div className="relative w-full aspect-square bg-gray-900 rounded-xl border border-white/10 p-4 flex items-center justify-center">
+            <div className="relative w-full aspect-square bg-gray-900 rounded-xl border border-border-custom p-4 flex items-center justify-center">
               <div className="absolute w-[120%] h-[2px] bg-purple-500 shadow-[0_0_15px_rgba(168,85,247,0.8)] animate-[scan_2s_linear_infinite]" />
               <div className="w-24 h-24 bg-white/10 rounded-lg" />
             </div>
           </motion.div>
 
           {/* Quick Actions */}
-          <motion.div variants={item} className="md:col-span-1 rounded-[2rem] bg-[#161B2B] border border-white/5 p-6 flex flex-col justify-center hover:bg-white/5 transition-colors cursor-pointer group">
+          <motion.div variants={item} className="md:col-span-1 rounded-[2rem] bg-card border border-border-custom p-6 flex flex-col justify-center hover:bg-white/5 transition-colors cursor-pointer group">
             <div className="flex items-center justify-between mb-4">
               <Users className="text-orange-400" />
-              <ArrowRight className="text-gray-600 group-hover:text-white transition-colors" />
+              <ArrowRight className="text-gray-600 group-hover:text-foreground transition-colors" />
             </div>
             <h3 className="text-lg font-bold">Manage Attendees</h3>
             <p className="text-xs text-gray-500 mt-2">CRM integration included</p>
           </motion.div>
 
-          <motion.div variants={item} className="md:col-span-1 rounded-[2rem] bg-[#161B2B] border border-white/5 p-6 flex flex-col justify-center hover:bg-white/5 transition-colors cursor-pointer group">
+          <motion.div variants={item} className="md:col-span-1 rounded-[2rem] bg-card border border-border-custom p-6 flex flex-col justify-center hover:bg-white/5 transition-colors cursor-pointer group">
             <div className="flex items-center justify-between mb-4">
               <ShieldCheck className="text-green-400" />
-              <ArrowRight className="text-gray-600 group-hover:text-white transition-colors" />
+              <ArrowRight className="text-gray-600 group-hover:text-foreground transition-colors" />
             </div>
             <h3 className="text-lg font-bold">Secure Payments</h3>
             <p className="text-xs text-gray-500 mt-2">Global gateways supported</p>
@@ -364,14 +366,14 @@ function FeaturesBentoGrid() {
 
 function CalendarSection() {
   return (
-    <section className="py-20 bg-[#0B0F1A]">
+    <section className="py-20 bg-background">
       <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
 
         {/* Visual */}
         <div className="order-2 lg:order-1 relative">
           <div className="absolute -inset-10 bg-gradient-to-tr from-cyan-900/40 to-blue-900/40 blur-[80px] rounded-full" />
 
-          <div className="relative bg-[#161B2B] rounded-[2.5rem] border border-white/10 p-8 shadow-2xl">
+          <div className="relative bg-card rounded-[2.5rem] border border-border-custom p-8 shadow-2xl">
             {/* Mock Calendar Header */}
             <div className="flex items-center justify-between mb-8">
               <h3 className="text-xl font-bold">January 2026</h3>
@@ -383,7 +385,7 @@ function CalendarSection() {
 
             {/* Mock Calendar Grid */}
             <div className="grid grid-cols-7 gap-4 mb-4 text-center text-sm font-medium text-gray-500">
-              {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => <div key={d}>{d}</div>)}
+              {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => <div key={i}>{d}</div>)}
             </div>
             <div className="grid grid-cols-7 gap-4 text-center">
               {/* Previous month days */}
@@ -405,8 +407,8 @@ function CalendarSection() {
 
                   {/* Tooltip for Event */}
                   {d === 15 && (
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-32 bg-gray-900 border border-white/10 rounded-lg p-3 text-left shadow-xl hidden group-hover:block z-10">
-                      <p className="text-xs font-bold text-white mb-1">Tech Conf '26</p>
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-32 bg-gray-900 border border-border-custom rounded-lg p-3 text-left shadow-xl hidden group-hover:block z-10">
+                      <p className="text-xs font-bold text-foreground mb-1">Tech Conf '26</p>
                       <p className="text-[10px] text-gray-400">10:00 AM - Main Hall</p>
                     </div>
                   )}
@@ -421,7 +423,7 @@ function CalendarSection() {
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/10 text-orange-400 text-xs font-bold uppercase tracking-wide">
             <Calendar className="w-3 h-3" /> Smart Scheduling
           </div>
-          <h2 className="text-4xl md:text-5xl font-bold">Never miss a beat <br />with <span className="text-white">Smart Calendars</span></h2>
+          <h2 className="text-4xl md:text-5xl font-bold">Never miss a beat <br />with <span className="text-foreground">Smart Calendars</span></h2>
           <p className="text-gray-400 text-lg leading-relaxed">
             Sync perfectly with Google Calendar, Outlook, and Apple Calendar. Drag-and-drop scheduling with automatic time-zone detection for your global audience.
           </p>
@@ -446,7 +448,7 @@ function SocialFeedSection() {
     <section className="py-24 relative overflow-hidden">
       {/* Background Marquee Text */}
       <div className="absolute top-1/2 -translate-y-1/2 left-0 w-full opacity-[0.03] select-none pointer-events-none">
-        <h2 className="text-[20vw] font-black whitespace-nowrap leading-none text-white whitespace-nowrap animate-marquee">
+        <h2 className="text-[20vw] font-black whitespace-nowrap leading-none text-foreground whitespace-nowrap animate-marquee">
           COMMUNITY CONNECT EVENTS LIVE
         </h2>
       </div>
@@ -462,7 +464,7 @@ function SocialFeedSection() {
 
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="space-y-6 mt-12">
-            <SocialCard name="Sarah J." handle="@sarah_ux" time="2m ago" content="The production quality at #EventKoi summits is just another level! 🚀" tags={['#Design', '#Tech']} />
+            <SocialCard name="Sarah J." handle="@sarah_ux" time="2m ago" content="The production quality at #EventEkhanei summits is just another level! 🚀" tags={['#Design', '#Tech']} />
             <SocialCard name="Dev DAO" handle="@dev_dao" time="1h ago" content="Just dropped our new roadmap at the community meetup. Thanks for hosting us!" tags={['#Web3', '#Community']} />
           </div>
           <div className="space-y-6">
@@ -481,14 +483,14 @@ function SocialFeedSection() {
 
 function SocialCard({ name, handle, time, content, tags, highlight }: any) {
   return (
-    <div className={`p-6 rounded-3xl border ${highlight ? 'bg-gradient-to-br from-cyan-900/20 to-[#161B2B] border-cyan-500/30' : 'bg-[#161B2B] border-white/5'} backdrop-blur-sm transition-transform hover:-translate-y-1`}>
+    <div className={`p-6 rounded-3xl border ${highlight ? 'bg-gradient-to-br from-cyan-900/20 to-[#161B2B] border-cyan-500/30' : 'bg-card border-border-custom'} backdrop-blur-sm transition-transform hover:-translate-y-1`}>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${highlight ? 'bg-cyan-500 text-black' : 'bg-gray-700 text-white'}`}>
+          <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${highlight ? 'bg-cyan-500 text-black' : 'bg-gray-700 text-foreground'}`}>
             {name.charAt(0)}
           </div>
           <div>
-            <h4 className="font-bold text-sm leading-tight text-white">{name}</h4>
+            <h4 className="font-bold text-sm leading-tight text-foreground">{name}</h4>
             <p className="text-xs text-gray-500">{handle}</p>
           </div>
         </div>
@@ -522,7 +524,7 @@ function CallToAction() {
           <Link href="/register" className="px-10 py-5 rounded-full bg-cyan-500 text-black font-bold text-lg hover:bg-cyan-400 transition-colors shadow-[0_0_30px_rgba(34,211,238,0.3)]">
             Get Started Now
           </Link>
-          <Link href="/contact" className="px-10 py-5 rounded-full border border-white/10 hover:bg-white/5 font-bold text-lg transition-colors">
+          <Link href="/contact" className="px-10 py-5 rounded-full border border-border-custom hover:bg-white/5 font-bold text-lg transition-colors">
             Contact Sales
           </Link>
         </div>
@@ -533,11 +535,11 @@ function CallToAction() {
 
 function Footer() {
   return (
-    <footer className="border-t border-white/5 bg-[#05080F] pt-20 pb-10 px-6">
+    <footer className="border-t border-border-custom bg-[#05080F] pt-20 pb-10 px-6">
       <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-12 mb-20">
         <div className="col-span-2 lg:col-span-2 space-y-6">
           <Link href="/" className="flex items-center gap-2">
-            <span className="font-bold text-2xl tracking-tight text-white">Event<span className="text-cyan-400">Koi</span></span>
+            <span className="font-bold text-2xl tracking-tight text-foreground">Event <span className="text-cyan-400">Ekhanei</span></span>
           </Link>
           <p className="text-gray-500 max-w-xs text-sm">
             Redefining event management with cutting-edge technology and beautiful design.
@@ -545,7 +547,7 @@ function Footer() {
         </div>
 
         <div>
-          <h4 className="font-bold text-white mb-6">Product</h4>
+          <h4 className="font-bold text-foreground mb-6">Product</h4>
           <ul className="space-y-4 text-sm text-gray-500">
             <li><a href="#" className="hover:text-cyan-400 transition-colors">Features</a></li>
             <li><a href="#" className="hover:text-cyan-400 transition-colors">Integrations</a></li>
@@ -555,7 +557,7 @@ function Footer() {
         </div>
 
         <div>
-          <h4 className="font-bold text-white mb-6">Resources</h4>
+          <h4 className="font-bold text-foreground mb-6">Resources</h4>
           <ul className="space-y-4 text-sm text-gray-500">
             <li><a href="#" className="hover:text-cyan-400 transition-colors">Community</a></li>
             <li><a href="#" className="hover:text-cyan-400 transition-colors">Documentation</a></li>
@@ -565,7 +567,7 @@ function Footer() {
         </div>
 
         <div>
-          <h4 className="font-bold text-white mb-6">Company</h4>
+          <h4 className="font-bold text-foreground mb-6">Company</h4>
           <ul className="space-y-4 text-sm text-gray-500">
             <li><a href="#" className="hover:text-cyan-400 transition-colors">About</a></li>
             <li><a href="#" className="hover:text-cyan-400 transition-colors">Careers</a></li>
@@ -575,12 +577,12 @@ function Footer() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center text-xs text-gray-600 border-t border-white/5 pt-8">
-        <p>&copy; 2026 Event Koi Inc. All rights reserved.</p>
+      <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center text-xs text-gray-600 border-t border-border-custom pt-8">
+        <p>&copy; 2026 Event Ekhanei Inc. All rights reserved.</p>
         <div className="flex gap-6 mt-4 md:mt-0">
-          <a href="#" className="hover:text-white transition-colors">Twitter</a>
-          <a href="#" className="hover:text-white transition-colors">LinkedIn</a>
-          <a href="#" className="hover:text-white transition-colors">Instagram</a>
+          <a href="#" className="hover:text-foreground transition-colors">Twitter</a>
+          <a href="#" className="hover:text-foreground transition-colors">LinkedIn</a>
+          <a href="#" className="hover:text-foreground transition-colors">Instagram</a>
         </div>
       </div>
     </footer>

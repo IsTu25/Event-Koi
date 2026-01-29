@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Space_Grotesk } from "next/font/google";
 import "./globals.css";
+import { ThemeProvider } from "@/components/theme-provider";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -15,8 +16,8 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "Event Koi - The Future of Event Management",
-  description: "Experience the future of event management with Event Koi. Streamlined, powerful, and built for you. Discover events, connect with friends, and organize amazing experiences.",
+  title: "Event Ekhanei - The Future of Event Management",
+  description: "Experience the future of event management with Event Ekhanei. Streamlined, powerful, and built for you. Discover events, connect with friends, and organize amazing experiences.",
   keywords: ["events", "event management", "ticketing", "organizer", "RDBMS"],
 };
 
@@ -26,12 +27,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${inter.variable} ${spaceGrotesk.variable} antialiased`}
         style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
       >
-        {children}
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

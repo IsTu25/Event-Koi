@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 
+import { writeFile, mkdir } from 'fs/promises';
+import path from 'path';
+
 export async function GET(request: Request) {
     try {
         const { searchParams } = new URL(request.url);
@@ -66,29 +69,22 @@ export async function POST(request: Request) {
         let image_url = null;
         if (image && typeof image === 'object' && (image as any).name) {
             try {
-                console.log('📷 Processing image upload to Cloudinary...');
+                console.log('📷 Processing image upload to Local Storage...');
                 const file = image as File;
-                const bytes = await file.arrayBuffer();
-                const buffer = Buffer.from(bytes);
+                const buffer = Buffer.from(await file.arrayBuffer());
 
-                // Convert to base64 for Cloudinary
-                const base64Image = `data:${file.type};base64,${buffer.toString('base64')}`;
+                // create a safe filename
+                const filename = `post-${Date.now()}-${file.name.replace(/\s/g, '_')}`;
+                const uploadDir = path.join(process.cwd(), 'public/uploads');
 
-                // Upload to Cloudinary
-                const cloudinary = require('cloudinary').v2;
-                cloudinary.config({
-                    cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'demo',
-                    api_key: process.env.CLOUDINARY_API_KEY || 'demo',
-                    api_secret: process.env.CLOUDINARY_API_SECRET || 'demo'
-                });
+                // Ensure directory exists
+                await mkdir(uploadDir, { recursive: true });
 
-                const uploadResult = await cloudinary.uploader.upload(base64Image, {
-                    folder: 'event-koi/posts',
-                    resource_type: 'auto'
-                });
+                // Write file
+                await writeFile(path.join(uploadDir, filename), buffer);
+                image_url = `/uploads/${filename}`;
 
-                image_url = uploadResult.secure_url;
-                console.log('✅ Image uploaded to Cloudinary:', image_url);
+                console.log('✅ Image uploaded locally:', image_url);
             } catch (imgError) {
                 console.error('⚠️ Image upload failed (continuing without image):', imgError);
                 // Continue without image rather than failing the entire post

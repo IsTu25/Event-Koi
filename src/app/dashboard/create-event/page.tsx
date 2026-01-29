@@ -288,7 +288,7 @@ export default function CreateEvent() {
                                     <span className="text-sm text-gray-500">BDT</span>
                                 </div>
                                 <p className="text-sm text-gray-400">
-                                    A one-time fee is required to publish your event on the Event Koi platform.
+                                    A one-time fee is required to publish your event on the Event Ekhanei platform.
                                 </p>
                             </div>
                         </motion.div>

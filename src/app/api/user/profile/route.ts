@@ -18,20 +18,22 @@ export async function PUT(request: Request) {
         }
 
         // Helper to save file
+        // Helper to save file
         const saveFile = async (file: File) => {
             const buffer = Buffer.from(await file.arrayBuffer());
             const filename = `${user_id}_${Date.now()}_${file.name.replace(/\s/g, '_')}`;
             const uploadDir = path.join(process.cwd(), 'public/uploads');
 
-            // Ensure directory exists (you might want to check/create this in a real app, assuming public exists)
-            // For this environment, we rely on public existing, but we might need to create 'uploads'
+            console.log(`[Upload] Saving file to: ${uploadDir}`);
+
             try {
+                const { mkdir } = require('fs/promises');
+                await mkdir(uploadDir, { recursive: true });
                 await writeFile(path.join(uploadDir, filename), buffer);
+                console.log(`[Upload] Success: ${filename}`);
                 return `/uploads/${filename}`;
             } catch (err) {
-                // If uploads dir doesn't exist, this might fail. We should probably create it.
-                // But for simplicity in this turn, assuming created or simple failure handling.
-                console.error("File save error", err);
+                console.error("[Upload] File save error", err);
                 return null;
             }
         };

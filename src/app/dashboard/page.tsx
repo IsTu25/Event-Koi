@@ -8,6 +8,7 @@ import {
     User, Ticket, Bell, Shield, Calendar, Plus, Scan, LayoutDashboard,
     Search, MapPin, Clock, ChevronRight, LogOut, ArrowUpRight
 } from 'lucide-react';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 export default function Dashboard() {
     const router = useRouter();
@@ -81,7 +82,7 @@ export default function Dashboard() {
     if (!user) return null;
 
     return (
-        <div className="min-h-screen bg-[#0B0F1A] text-white font-sans selection:bg-cyan-500/30">
+        <div className="min-h-screen bg-background text-foreground font-sans selection:bg-cyan-500/30">
             {/* Ambient Background - Subtle on dashboard to not distract */}
             <div className="fixed inset-0 z-0 pointer-events-none">
                 <div className="absolute top-[-20%] left-[20%] w-[40vw] h-[40vw] bg-cyan-900/05 rounded-full blur-[100px]" />
@@ -100,7 +101,7 @@ export default function Dashboard() {
                         <Link href="/" className="group flex items-center gap-2">
                             <div className="relative w-10 h-10">
                                 <span className="absolute inset-0 bg-gradient-to-tr from-cyan-400 to-orange-400 rounded-xl blur opacity-60 group-hover:opacity-100 transition-opacity" />
-                                <div className="relative w-full h-full bg-[#0B0F1A] rounded-xl border border-white/10 flex items-center justify-center">
+                                <div className="relative w-full h-full bg-background rounded-xl border border-white/10 flex items-center justify-center">
                                     <span className="text-transparent bg-clip-text bg-gradient-to-tr from-cyan-400 to-orange-400 font-bold text-xl">E</span>
                                 </div>
                             </div>
@@ -116,8 +117,8 @@ export default function Dashboard() {
                             <h2 className="text-white font-medium flex items-center gap-2">
                                 Hello, {user.name}
                                 <span className={`px-2 py-0.5 rounded-full text-[10px] uppercase font-bold tracking-wider ${user.role === 'admin' ? 'bg-red-500/10 text-red-500 border border-red-500/20' :
-                                        user.role === 'organizer' ? 'bg-purple-500/10 text-purple-500 border border-purple-500/20' :
-                                            'bg-cyan-500/10 text-cyan-500 border border-cyan-500/20'
+                                    user.role === 'organizer' ? 'bg-purple-500/10 text-purple-500 border border-purple-500/20' :
+                                        'bg-cyan-500/10 text-cyan-500 border border-cyan-500/20'
                                     }`}>
                                     {user.role}
                                 </span>
@@ -162,7 +163,9 @@ export default function Dashboard() {
                             </button>
                         )}
 
-                        <button onClick={handleLogout} className="p-2.5 rounded-xl hover:bg-white/5 text-gray-400 hover:text-white transition-colors">
+                        <ThemeToggle />
+
+                        <button onClick={handleLogout} className="p-2.5 rounded-xl hover:bg-white/5 text-gray-400 hover:text-foreground transition-colors">
                             <LogOut size={18} />
                         </button>
                     </div>
@@ -178,7 +181,7 @@ export default function Dashboard() {
                         transition={{ delay: 0.1 }}
                         className="lg:col-span-1 space-y-6"
                     >
-                        <div className="bg-[#161B2B] border border-white/5 rounded-3xl p-6 relative overflow-hidden group">
+                        <div className="bg-card border-border-custom rounded-3xl p-6 relative overflow-hidden group">
                             <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
                                 <LayoutDashboard size={100} />
                             </div>
@@ -192,7 +195,7 @@ export default function Dashboard() {
                             </div>
                         </div>
 
-                        <div className="bg-[#161B2B] border border-white/5 rounded-3xl p-6 relative overflow-hidden group">
+                        <div className="bg-card border-border-custom rounded-3xl p-6 relative overflow-hidden group">
                             <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
                                 <Ticket size={100} />
                             </div>
@@ -215,13 +218,13 @@ export default function Dashboard() {
                         className="lg:col-span-3 space-y-8"
                     >
                         {/* Search & Filter */}
-                        <div className="flex flex-col sm:flex-row gap-4 justify-between items-center bg-[#161B2B] border border-white/5 rounded-2xl p-4">
+                        <div className="flex flex-col sm:flex-row gap-4 justify-between items-center bg-card border-border-custom rounded-2xl p-4">
                             <div className="relative w-full sm:max-w-md group">
                                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-cyan-400 transition-colors" size={18} />
                                 <input
                                     type="text"
                                     placeholder="Search events..."
-                                    className="w-full bg-[#0B0F1A] border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50 transition-all font-medium text-sm"
+                                    className="w-full bg-background border-border-custom rounded-xl py-3 pl-12 pr-4 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50 transition-all font-medium text-sm"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                 />
@@ -250,7 +253,7 @@ export default function Dashboard() {
                                     ))}
                                 </div>
                             ) : events.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center py-20 text-center rounded-3xl bg-[#161B2B]/50 border border-white/5 border-dashed">
+                                <div className="flex flex-col items-center justify-center py-20 text-center rounded-3xl bg-card/50 border border-white/5 border-dashed">
                                     <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
                                         <Search className="text-gray-500" size={32} />
                                     </div>
@@ -297,7 +300,7 @@ function EventCard({ event, onClick }: { event: any; onClick: () => void }) {
         <motion.div
             whileHover={{ y: -5 }}
             onClick={onClick}
-            className="bg-[#161B2B] border border-white/5 rounded-3xl p-6 cursor-pointer group hover:border-cyan-500/30 transition-all shadow-lg hover:shadow-cyan-500/10 relative overflow-hidden"
+            className="bg-card border-border-custom rounded-3xl p-6 cursor-pointer group hover:border-cyan-500/30 transition-all shadow-lg hover:shadow-cyan-500/10 relative overflow-hidden"
         >
             <div className="absolute top-0 right-0 p-8 opacity-0 group-hover:opacity-10 transition-opacity duration-500 pointer-events-none">
                 <ArrowUpRight size={120} className="text-cyan-500 -mr-10 -mt-10" />
@@ -378,7 +381,7 @@ function NotificationBell({ userId }: { userId: string }) {
             >
                 <Bell size={20} />
                 {unreadCount > 0 && (
-                    <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#0B0F1A]" />
+                    <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-background" />
                 )}
             </button>
 
@@ -388,7 +391,7 @@ function NotificationBell({ userId }: { userId: string }) {
                     <motion.div
                         initial={{ opacity: 0, y: 10, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
-                        className="absolute right-0 mt-4 w-80 bg-[#161B2B] border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden"
+                        className="absolute right-0 mt-4 w-80 bg-card border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden"
                     >
                         <div className="p-4 border-b border-white/5 flex justify-between items-center">
                             <h3 className="font-bold text-white text-sm">Notifications</h3>

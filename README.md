@@ -1,11 +1,11 @@
-# 🐟 Event Koi - Complete Event Management System
+# 🐟 Event Ekhanei - Complete Event Management System
 
 [![Next.js](https://img.shields.io/badge/Next.js-16.0-black)](https://nextjs.org/)
 [![MySQL](https://img.shields.io/badge/MySQL-8.0-blue)](https://www.mysql.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-A comprehensive, production-ready event management platform built with **Next.js**, **MySQL**, and modern web technologies. Event Koi enables seamless event creation, ticket booking, social networking, real-time chat, and sponsorship management.
+A comprehensive, production-ready event management platform built with **Next.js**, **MySQL**, and modern web technologies. Event Ekhanei enables seamless event creation, ticket booking, social networking, real-time chat, and sponsorship management.
 
 ---
 
@@ -101,7 +101,7 @@ A comprehensive, production-ready event management platform built with **Next.js
 
 ## 🗄️ Database Architecture
 
-Event Koi uses a **relational database model** with 13 interconnected tables following industry best practices.
+Event Ekhanei uses a **relational database model** with 13 interconnected tables following industry best practices.
 
 ### **Entity-Relationship Diagram**
 

@@ -70,7 +70,7 @@ function LoginForm() {
                         </div>
                     </div>
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight">Event<span className="text-cyan-400">Koi</span></h1>
+                        <h1 className="text-2xl font-bold tracking-tight">Event <span className="text-cyan-400">Ekhanei</span></h1>
                     </div>
                 </Link>
 

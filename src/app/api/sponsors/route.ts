@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
-import { writeFile } from 'fs/promises';
+import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 
 export async function POST(request: Request) {
@@ -24,6 +24,7 @@ export async function POST(request: Request) {
             const filename = `sponsor_${Date.now()}_${logo.name.replace(/\s/g, '_')}`;
             const uploadDir = path.join(process.cwd(), 'public/uploads');
             try {
+                await mkdir(uploadDir, { recursive: true });
                 await writeFile(path.join(uploadDir, filename), buffer);
                 logoPath = `/uploads/${filename}`;
             } catch (e) {

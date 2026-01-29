@@ -94,7 +94,7 @@ export default function RegisterPage() {
                             <span className="text-transparent bg-clip-text bg-gradient-to-tr from-cyan-400 to-orange-400 font-bold text-xl">E</span>
                         </div>
                     </div>
-                    <span className="font-bold text-2xl tracking-tight">Event<span className="text-cyan-400">Koi</span></span>
+                    <span className="font-bold text-2xl tracking-tight">Event <span className="text-cyan-400">Ekhanei</span></span>
                 </Link>
 
                 <div className="bg-[#161B2B]/80 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-8 md:p-12 shadow-2xl">
