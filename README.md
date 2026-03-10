@@ -386,21 +386,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-## 👨‍💻 Author
-
-**Md. Isfakiqbal Chowdhury**
-
-- GitHub: [@IsTu25](https://github.com/IsTu25)
-- Project Link: [https://github.com/IsTu25/Event-Koi](https://github.com/IsTu25/Event-Koi)
-
----
-
-## 🙏 Acknowledgments
-
-- Next.js team for the amazing framework
-- MySQL for robust database management
-- Open-source community for invaluable tools and libraries
-
----
-
-**⭐ If you found this project helpful, please give it a star!**
