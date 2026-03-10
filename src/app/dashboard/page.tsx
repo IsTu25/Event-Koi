@@ -14,8 +14,12 @@ export default function Dashboard() {
     const router = useRouter();
     const [user, setUser] = useState<any>(null);
     const [events, setEvents] = useState<any[]>([]);
+    const [categories, setCategories] = useState<any[]>([]);
+    const [selectedCategory, setSelectedCategory] = useState<string>('all');
     const [requestStatus, setRequestStatus] = useState<'idle' | 'pending' | 'success'>('idle');
     const [searchQuery, setSearchQuery] = useState('');
+    const [searchHistory, setSearchHistory] = useState<any[]>([]);
+    const [showSearchHistory, setShowSearchHistory] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -28,8 +32,16 @@ export default function Dashboard() {
     }, [router]);
 
     useEffect(() => {
-        if (user) fetchEvents();
+        if (user) {
+            fetchEvents();
+            fetchCategories();
+            fetchSearchHistory();
+        }
     }, [user]);
+
+    useEffect(() => {
+        if (user) fetchEvents();
+    }, [selectedCategory]);
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -38,10 +50,32 @@ export default function Dashboard() {
         return () => clearTimeout(timer);
     }, [searchQuery]);
 
+    const fetchCategories = async () => {
+        try {
+            const res = await fetch('/api/categories');
+            if (res.ok) setCategories(await res.json());
+        } catch (e) {
+            console.error('Failed to fetch categories', e);
+        }
+    };
+
+    const fetchSearchHistory = async () => {
+        try {
+            const res = await fetch(`/api/search-history?user_id=${user.id || user.userId || (user as any).insertId}`);
+            if (res.ok) {
+                const history = await res.json();
+                const uniqueQueries = Array.from(new Set(history.map((h: any) => h.query).filter(Boolean))).slice(0, 5);
+                setSearchHistory(uniqueQueries);
+            }
+        } catch (e) {
+            console.error('Failed to fetch search history', e);
+        }
+    };
+
     const fetchEvents = async () => {
         setIsLoading(true);
         try {
-            const res = await fetch(`/api/events?search=${encodeURIComponent(searchQuery)}`);
+            const res = await fetch(`/api/events?search=${encodeURIComponent(searchQuery)}&category_id=${selectedCategory}`);
             if (res.ok) {
                 const data = await res.json();
                 const upcomingEvents = data.filter((e: any) => new Date(e.end_time) > new Date());
@@ -53,6 +87,14 @@ export default function Dashboard() {
             setIsLoading(false);
         }
     };
+
+    // Derived state for grouped events
+    const groupedEvents = events.reduce((acc: any, event: any) => {
+        const style = getCategoryStyles(event.category_name);
+        if (!acc[style.zone]) acc[style.zone] = [];
+        acc[style.zone].push(event);
+        return acc;
+    }, {});
 
     const handleRequestRole = async () => {
         if (!user) return;
@@ -211,41 +253,77 @@ export default function Dashboard() {
                     </motion.div>
 
                     {/* Right Content / Events */}
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: 0.2 }}
-                        className="lg:col-span-3 space-y-8"
-                    >
+                    <div className="lg:col-span-3 space-y-8">
                         {/* Search & Filter */}
                         <div className="flex flex-col sm:flex-row gap-4 justify-between items-center bg-card border-border-custom rounded-2xl p-4">
-                            <div className="relative w-full sm:max-w-md group">
+                            <div className="relative w-full sm:max-w-md group z-20">
                                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-cyan-400 transition-colors" size={18} />
                                 <input
                                     type="text"
                                     placeholder="Search events..."
                                     className="w-full bg-background border-border-custom rounded-xl py-3 pl-12 pr-4 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50 transition-all font-medium text-sm"
                                     value={searchQuery}
+                                    onFocus={() => setShowSearchHistory(true)}
+                                    onBlur={() => setTimeout(() => setShowSearchHistory(false), 200)}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                 />
+                                {showSearchHistory && searchHistory.length > 0 && !searchQuery && (
+                                    <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border-custom rounded-xl shadow-xl overflow-hidden">
+                                        <div className="px-4 py-2 border-b border-border-custom flex justify-between items-center text-xs">
+                                            <span className="text-gray-500 font-semibold uppercase tracking-wider">Recent Searches</span>
+                                            <button
+                                                onClick={async () => {
+                                                    await fetch(`/api/search-history?user_id=${user.id || user.userId || (user as any).insertId}`, { method: 'DELETE' });
+                                                    setSearchHistory([]);
+                                                }}
+                                                className="text-red-400 hover:text-red-300 transition-colors"
+                                            >
+                                                Clear
+                                            </button>
+                                        </div>
+                                        {searchHistory.map((query: any, i) => (
+                                            <button
+                                                key={i}
+                                                className="w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-white/5 hover:text-cyan-400 transition-colors flex items-center gap-3"
+                                                onClick={() => {
+                                                    setSearchQuery(query);
+                                                    setShowSearchHistory(false);
+                                                }}
+                                            >
+                                                <Clock size={14} className="opacity-50" />
+                                                {query}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
-                            <div className="flex gap-2">
-                                {/* Categories or filters could go here */}
-                                <button className="px-4 py-2 rounded-xl text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-colors">All</button>
-                                <button className="px-4 py-2 rounded-xl text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-colors">Music</button>
-                                <button className="px-4 py-2 rounded-xl text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-colors">Tech</button>
+                            <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0 px-2 sm:px-0 scrollbar-hide">
+                                <button
+                                    onClick={() => setSelectedCategory('all')}
+                                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${selectedCategory === 'all'
+                                        ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
+                                        : 'text-gray-400 hover:text-white hover:bg-white/5'
+                                        }`}
+                                >
+                                    All
+                                </button>
+                                {categories.map((cat) => (
+                                    <button
+                                        key={cat.category_id}
+                                        onClick={() => setSelectedCategory(cat.category_id.toString())}
+                                        className={`px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${selectedCategory === cat.category_id.toString()
+                                            ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
+                                            : 'text-gray-400 hover:text-white hover:bg-white/5'
+                                            }`}
+                                    >
+                                        {cat.name}
+                                    </button>
+                                ))}
                             </div>
                         </div>
 
-                        {/* Events Grid */}
-                        <div>
-                            <div className="flex items-center justify-between mb-6">
-                                <h3 className="text-2xl font-bold flex items-center gap-2">
-                                    <span className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-500"><Calendar size={18} /></span>
-                                    Upcoming Events
-                                </h3>
-                            </div>
-
+                        {/* Events Zones */}
+                        <div className="space-y-12">
                             {isLoading ? (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     {[1, 2, 3, 4].map((i) => (
@@ -261,14 +339,35 @@ export default function Dashboard() {
                                     <p className="text-gray-500">Try adjusting your search or filters</p>
                                 </div>
                             ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    {events.map((event: any) => (
-                                        <EventCard key={event.event_id} event={event} onClick={() => router.push(`/dashboard/event/${event.event_id}`)} />
-                                    ))}
-                                </div>
+                                Object.entries(groupedEvents).map(([zone, zoneEvents]: [string, any], index) => {
+                                    // Get styles just for the header icon/color
+                                    const sampleStyle = getCategoryStyles((zoneEvents as any[])[0].category_name);
+
+                                    return (
+                                        <motion.div
+                                            key={zone}
+                                            initial={{ opacity: 0, x: 50 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            transition={{ delay: index * 0.15, duration: 0.5, ease: "easeOut" }}
+                                            className="space-y-4"
+                                        >
+                                            <div className="flex items-center gap-3 border-b border-white/5 pb-2 mb-4">
+                                                {sampleStyle.icon}
+                                                <h3 className={`text-xl font-bold ${sampleStyle.textColor}`}>{zone}</h3>
+                                                <span className="text-xs font-mono text-gray-500 bg-white/5 px-2 py-1 rounded-md">{zoneEvents.length}</span>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                {(zoneEvents as any[]).map((event: any) => (
+                                                    <EventCard key={event.event_id} event={event} onClick={() => router.push(`/dashboard/event/${event.event_id}`)} />
+                                                ))}
+                                            </div>
+                                        </motion.div>
+                                    );
+                                })
                             )}
                         </div>
-                    </motion.div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -289,48 +388,144 @@ function NavButton({ href, icon, label }: { href: string; icon: React.ReactNode;
     );
 }
 
+// Helper to determine category styling "Zones"
+function getCategoryStyles(categoryName: string = '') {
+    const lowerCat = categoryName.toLowerCase();
+
+    // Tech & Business
+    if (lowerCat.includes('tech') || lowerCat.includes('innovation') || lowerCat.includes('startup') || lowerCat.includes('business') || lowerCat.includes('gaming') || lowerCat.includes('esports')) {
+        return {
+            zone: 'Tech & Future Zone',
+            borderColor: 'border-cyan-500/50',
+            glowColor: 'shadow-cyan-500/20',
+            bgGradient: 'from-cyan-500/5 to-blue-500/5',
+            textColor: 'text-cyan-400',
+            icon: <div className="p-2 rounded-lg bg-cyan-500/10 text-cyan-400"><LayoutDashboard size={18} /></div>,
+            badge: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20'
+        };
+    }
+    // Arts, Music & Culture
+    else if (lowerCat.includes('music') || lowerCat.includes('entertainment') || lowerCat.includes('concert') || lowerCat.includes('film') || lowerCat.includes('media') || lowerCat.includes('fashion') || lowerCat.includes('art') || lowerCat.includes('culture')) {
+        return {
+            zone: 'Creative & Vibe Zone',
+            borderColor: 'border-purple-500/50',
+            glowColor: 'shadow-purple-500/20',
+            bgGradient: 'from-purple-500/5 to-pink-500/5',
+            textColor: 'text-purple-400',
+            icon: <div className="p-2 rounded-lg bg-purple-500/10 text-purple-400"><Ticket size={18} /></div>,
+            badge: 'bg-purple-500/10 text-purple-400 border-purple-500/20'
+        };
+    }
+    // Sports & Adventure
+    else if (lowerCat.includes('sport') || lowerCat.includes('fitness') || lowerCat.includes('travel') || lowerCat.includes('adventure')) {
+        return {
+            zone: 'Action & Adventure Zone',
+            borderColor: 'border-orange-500/50',
+            glowColor: 'shadow-orange-500/20',
+            bgGradient: 'from-orange-500/5 to-red-500/5',
+            textColor: 'text-orange-400',
+            icon: <div className="p-2 rounded-lg bg-orange-500/10 text-orange-400"><Shield size={18} /></div>,
+            badge: 'bg-orange-500/10 text-orange-400 border-orange-500/20'
+        };
+    }
+    // Education, Health & Community
+    else if (lowerCat.includes('education') || lowerCat.includes('learning') || lowerCat.includes('book') || lowerCat.includes('health') || lowerCat.includes('wellness') || lowerCat.includes('charity')) {
+        return {
+            zone: 'Growth & Community Zone',
+            borderColor: 'border-emerald-500/50',
+            glowColor: 'shadow-emerald-500/20',
+            bgGradient: 'from-emerald-500/5 to-teal-500/5',
+            textColor: 'text-emerald-400',
+            icon: <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400"><User size={18} /></div>,
+            badge: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+        };
+    }
+    // Social, Food & Family
+    else if (lowerCat.includes('wedding') || lowerCat.includes('marriage') || lowerCat.includes('family') || lowerCat.includes('food')) {
+        return {
+            zone: 'Social & Family Zone',
+            borderColor: 'border-rose-500/50',
+            glowColor: 'shadow-rose-500/20',
+            bgGradient: 'from-rose-500/5 to-pink-500/5',
+            textColor: 'text-rose-400',
+            icon: <div className="p-2 rounded-lg bg-rose-500/10 text-rose-400"><User size={18} /></div>,
+            badge: 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+        };
+    } else {
+        // Default
+        return {
+            zone: 'General Event',
+            borderColor: 'border-white/10',
+            glowColor: 'shadow-white/5',
+            bgGradient: 'from-white/5 to-white/0',
+            textColor: 'text-gray-400',
+            icon: <div className="p-2 rounded-lg bg-white/5 text-gray-400"><Calendar size={18} /></div>,
+            badge: 'bg-white/5 text-gray-300 border-white/10'
+        };
+    }
+}
+
 function EventCard({ event, onClick }: { event: any; onClick: () => void }) {
-    const statusColors: { [key: string]: string } = {
-        'PUBLISHED': 'bg-green-500/10 text-green-500 border-green-500/20',
-        'DRAFT': 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
-        'CANCELLED': 'bg-red-500/10 text-red-500 border-red-500/20',
-    };
+    const styles = getCategoryStyles(event.category_name);
 
     return (
         <motion.div
-            whileHover={{ y: -5 }}
+            whileHover={{ y: -5, scale: 1.01 }}
             onClick={onClick}
-            className="bg-card border-border-custom rounded-3xl p-6 cursor-pointer group hover:border-cyan-500/30 transition-all shadow-lg hover:shadow-cyan-500/10 relative overflow-hidden"
+            className={`
+                relative overflow-hidden rounded-3xl p-6 cursor-pointer transition-all duration-300
+                bg-card border ${styles.borderColor} hover:shadow-2xl ${styles.glowColor}
+                group
+            `}
         >
-            <div className="absolute top-0 right-0 p-8 opacity-0 group-hover:opacity-10 transition-opacity duration-500 pointer-events-none">
-                <ArrowUpRight size={120} className="text-cyan-500 -mr-10 -mt-10" />
+            {/* Dynamic Background Gradient */}
+            <div className={`absolute inset-0 bg-gradient-to-br ${styles.bgGradient} opacity-50 group-hover:opacity-100 transition-opacity`} />
+
+            {/* Animated Highlight Line on Top */}
+            <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${styles.bgGradient.replace('/5', '')} transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left`} />
+
+            {/* Decorative Icon Watermark */}
+            <div className={`absolute -bottom-6 -right-6 opacity-5 group-hover:opacity-10 transition-all duration-500 transform group-hover:scale-110 group-hover:rotate-12 ${styles.textColor}`}>
+                <ArrowUpRight size={140} />
             </div>
 
-            <div className="flex justify-between items-start mb-6">
-                <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${statusColors[event.status] || 'bg-gray-500/10 text-gray-500 border-gray-500/20'}`}>
-                    {event.status}
-                </span>
-                <span className="text-xs font-semibold text-gray-400 bg-white/5 px-3 py-1 rounded-full border border-white/5">
-                    {event.category_name || 'Event'}
-                </span>
-            </div>
-
-            <h3 className="text-xl font-bold text-white mb-2 group-hover:text-cyan-400 transition-colors line-clamp-1">
-                {event.title}
-            </h3>
-
-            <p className="text-gray-400 text-sm mb-6 line-clamp-2 leading-relaxed h-10">
-                {event.description || 'No description available'}
-            </p>
-
-            <div className="space-y-3 pt-6 border-t border-white/5">
-                <div className="flex items-center gap-3 text-sm text-gray-400">
-                    <Calendar size={16} className="text-gray-600" />
-                    <span>{new Date(event.start_time).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+            <div className="relative z-10 flex flex-col h-full">
+                <div className="flex justify-between items-start mb-6">
+                    <div className="flex items-center gap-3">
+                        {styles.icon}
+                        <div>
+                            <span className={`text-[10px] font-bold uppercase tracking-widest block opacity-70 ${styles.textColor}`}>
+                                {styles.zone}
+                            </span>
+                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${styles.badge}`}>
+                                {event.category_name || 'Event'}
+                            </span>
+                        </div>
+                    </div>
+                    {event.status !== 'PUBLISHED' && (
+                        <span className="px-2 py-1 rounded-md text-[10px] uppercase font-bold bg-yellow-500/10 text-yellow-500 border border-yellow-500/20">
+                            {event.status}
+                        </span>
+                    )}
                 </div>
-                <div className="flex items-center gap-3 text-sm text-gray-400">
-                    <MapPin size={16} className="text-gray-600" />
-                    <span className="line-clamp-1">{event.venue_name || 'Online'}</span>
+
+                <h3 className={`text-xl font-bold text-white mb-2 group-hover:${styles.textColor} transition-colors line-clamp-1`}>
+                    {event.title}
+                </h3>
+
+                <p className="text-gray-400 text-sm mb-6 line-clamp-2 leading-relaxed h-10">
+                    {event.description || 'No description available'}
+                </p>
+
+                <div className="mt-auto space-y-3 pt-6 border-t border-white/5">
+                    <div className="flex items-center gap-3 text-sm text-gray-400 group-hover:text-gray-300 transition-colors">
+                        <Clock size={16} className={styles.textColor} />
+                        <span>{new Date(event.start_time).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm text-gray-400 group-hover:text-gray-300 transition-colors">
+                        <MapPin size={16} className={styles.textColor} />
+                        <span className="line-clamp-1">{event.venue_name || 'Online'}</span>
+                    </div>
                 </div>
             </div>
         </motion.div>

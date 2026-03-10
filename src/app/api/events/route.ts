@@ -41,6 +41,12 @@ export async function GET(request: Request) {
             params.push(`%${search}%`, `%${search}%`);
         }
 
+        const categoryId = searchParams.get('category_id');
+        if (categoryId && categoryId !== 'all') {
+            conditions.push('e.category_id = ?');
+            params.push(categoryId);
+        }
+
         if (conditions.length > 0) {
             query += ' WHERE ' + conditions.join(' AND ');
         }

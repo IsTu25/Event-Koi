@@ -8,7 +8,7 @@ import {
     Calendar, MapPin, Clock, User, Heart, MessageCircle, Send,
     Share2, Trash2, Edit2, CheckCircle, XCircle, DollarSign,
     Ticket, Image as ImageIcon, Briefcase, Plus, Loader, ArrowLeft,
-    Megaphone, ThumbsUp, MessageSquare
+    Megaphone, ThumbsUp, MessageSquare, BarChart3, X
 } from 'lucide-react';
 
 export default function EventDetails() {
@@ -20,6 +20,7 @@ export default function EventDetails() {
     const [event, setEvent] = useState<any>(null);
     const [ticketTypes, setTicketTypes] = useState<any[]>([]);
     const [sponsors, setSponsors] = useState<any[]>([]);
+    const [waitlistItems, setWaitlistItems] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     // Ticket Creation State
@@ -38,14 +39,20 @@ export default function EventDetails() {
     const [newSponsor, setNewSponsor] = useState({ name: '', contribution: '', tier: 'Partner', logo: null as File | null });
     const [sponsorLoading, setSponsorLoading] = useState(false);
 
+    // Analytics State
+    const [showAnalytics, setShowAnalytics] = useState(false);
+    const [analyticsData, setAnalyticsData] = useState<any>(null);
+    const [analyticsLoading, setAnalyticsLoading] = useState(false);
+
     useEffect(() => {
         const storedUser = localStorage.getItem('user');
         if (!storedUser) {
             router.push('/login');
             return;
         }
-        setUser(JSON.parse(storedUser));
-        if (id) fetchData(id as string);
+        const u = JSON.parse(storedUser);
+        setUser(u);
+        if (id) fetchData(id as string, u);
     }, [id, router]);
 
     useEffect(() => {
@@ -73,22 +80,41 @@ export default function EventDetails() {
         }
     }, [event]);
 
-    const fetchData = async (eventId: string) => {
+    const fetchData = async (eventId: string, currentUser?: any) => {
+        const u = currentUser || user;
+        if (!u?.id) return;
+
         try {
-            const [eventRes, ticketsRes, sponsorsRes] = await Promise.all([
+            const [eventRes, ticketsRes, sponsorsRes, waitlistRes] = await Promise.all([
                 fetch(`/api/events/${eventId}`),
                 fetch(`/api/ticket-types?event_id=${eventId}`),
-                fetch(`/api/sponsors?event_id=${eventId}`)
+                fetch(`/api/sponsors?event_id=${eventId}`),
+                fetch(`/api/event-waitlist?user_id=${u.id}&event_id=${eventId}`)
             ]);
 
             if (eventRes.ok) setEvent(await eventRes.json());
             if (ticketsRes.ok) setTicketTypes(await ticketsRes.json());
             if (sponsorsRes.ok) setSponsors(await sponsorsRes.json());
+            if (waitlistRes.ok) setWaitlistItems(await waitlistRes.json());
         } catch (error) {
             console.error('Error fetching data:', error);
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleJoinWaitlist = async (ticketTypeId: number) => {
+        try {
+            const res = await fetch('/api/event-waitlist', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: user.id, event_id: id, ticket_type_id: ticketTypeId })
+            });
+            if (res.ok) {
+                alert('Success! You are now on the waitlist.');
+                fetchData(id as string);
+            }
+        } catch (e) { alert('Failed to join waitlist'); }
     };
 
     const handleUpdateEvent = async () => {
@@ -127,6 +153,17 @@ export default function EventDetails() {
                 fetchData(id as string);
             }
         } catch (error) { console.error(error); } finally { setTicketSubmitting(false); }
+    };
+
+    const loadAnalytics = async () => {
+        setShowAnalytics(true);
+        if (analyticsData) return;
+        setAnalyticsLoading(true);
+        try {
+            const res = await fetch(`/api/events/${id}/analytics`);
+            if (res.ok) setAnalyticsData(await res.json());
+        } catch (e) { console.error(e); }
+        setAnalyticsLoading(false);
     };
 
     const handleAddSponsor = async (e: React.FormEvent) => {
@@ -268,16 +305,24 @@ export default function EventDetails() {
                                 <div className="flex gap-2 w-full">
                                     <button
                                         onClick={() => setIsEditing(!isEditing)}
-                                        className="flex-1 py-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white font-bold text-sm transition-colors flex items-center justify-center gap-2"
+                                        className="flex-1 py-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white font-bold text-sm transition-colors flex items-center justify-center gap-2"
                                     >
-                                        {isEditing ? <><XCircle size={16} /> Cancel</> : <><Edit2 size={16} /> Edit</>}
+                                        {isEditing ? <><XCircle size={16} /> Cancel</> : <><Edit2 size={16} /> Edit Details</>}
                                     </button>
+                                    {!isEditing && (
+                                        <button
+                                            onClick={loadAnalytics}
+                                            className="flex-1 py-3 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 hover:bg-cyan-500/20 font-bold text-sm transition-colors flex items-center justify-center gap-2 shadow-lg shadow-cyan-900/10"
+                                        >
+                                            <BarChart3 size={16} /> Analytics
+                                        </button>
+                                    )}
                                     {isEditing && (
                                         <button
                                             onClick={handleUpdateEvent}
-                                            className="flex-1 py-2.5 rounded-xl bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30 font-bold text-sm transition-colors flex items-center justify-center gap-2"
+                                            className="flex-1 py-3 rounded-xl bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30 font-bold text-sm transition-colors flex items-center justify-center gap-2"
                                         >
-                                            <CheckCircle size={16} /> Save
+                                            <CheckCircle size={16} /> Save Changes
                                         </button>
                                     )}
                                 </div>
@@ -518,25 +563,32 @@ export default function EventDetails() {
                                                     </div>
                                                     <p className="text-xs text-gray-500 mb-4">{t.quantity} remaining</p>
                                                     <button
-                                                        disabled={t.quantity <= 0}
                                                         onClick={async () => {
-                                                            if (!confirm(`Book ${t.name} for ৳${t.price}?`)) return;
-                                                            try {
-                                                                const res = await fetch('/api/bookings', {
-                                                                    method: 'POST',
-                                                                    headers: { 'Content-Type': 'application/json' },
-                                                                    body: JSON.stringify({ user_id: user.id, event_id: id, ticket_type_id: t.ticket_type_id })
-                                                                });
-                                                                if (res.ok) { alert('Ticket Booked! Check My Tickets.'); fetchData(id as string); }
-                                                                else alert('Booking failed');
-                                                            } catch (e) { console.error(e); }
+                                                            if (t.quantity > 0) {
+                                                                if (!confirm(`Book ${t.name} for ৳${t.price}?`)) return;
+                                                                try {
+                                                                    const res = await fetch('/api/bookings', {
+                                                                        method: 'POST',
+                                                                        headers: { 'Content-Type': 'application/json' },
+                                                                        body: JSON.stringify({ user_id: user.id, event_id: id, ticket_type_id: t.ticket_type_id })
+                                                                    });
+                                                                    if (res.ok) { alert('Ticket Booked! Check My Tickets.'); fetchData(id as string); }
+                                                                    else alert('Booking failed');
+                                                                } catch (e) { console.error(e); }
+                                                            } else {
+                                                                handleJoinWaitlist(t.ticket_type_id);
+                                                            }
                                                         }}
                                                         className={`w-full py-3 rounded-xl font-bold text-sm transition-all ${t.quantity > 0
-                                                                ? 'bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white shadow-lg shadow-cyan-500/20'
-                                                                : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                                                            ? 'bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white shadow-lg shadow-cyan-500/20'
+                                                            : waitlistItems.some(w => w.ticket_type_id === t.ticket_type_id)
+                                                                ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20 cursor-default'
+                                                                : 'bg-orange-600 hover:bg-orange-500 text-white shadow-lg shadow-orange-900/20'
                                                             }`}
                                                     >
-                                                        {t.quantity > 0 ? 'Book Ticket' : 'Sold Out'}
+                                                        {t.quantity > 0 ? 'Book Ticket' : waitlistItems.find(w => w.ticket_type_id === t.ticket_type_id)
+                                                            ? `Waitlist Pos: ${waitlistItems.find(w => w.ticket_type_id === t.ticket_type_id)?.position_in_queue || '...'}`
+                                                            : 'Join Waitlist'}
                                                     </button>
                                                 </div>
                                             ))}
@@ -562,6 +614,96 @@ export default function EventDetails() {
                     </div>
                 </div>
             </div>
+
+            {/* Advanced Analytics Modal */}
+            <AnimatePresence>
+                {showAnalytics && (
+                    <div className="fixed inset-0 z-[100] flex justify-center items-end sm:items-center p-0 sm:p-6 bg-black/80 backdrop-blur-sm">
+                        <motion.div initial={{ opacity: 0, y: "100%" }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: "100%" }} className="bg-[#161B2B] sm:rounded-3xl w-full max-w-5xl h-[90vh] sm:h-[80vh] flex flex-col border border-white/10 shadow-2xl relative overflow-hidden">
+                            <div className="p-6 border-b border-white/5 flex justify-between items-center bg-[#0B0F1A]">
+                                <div>
+                                    <h2 className="text-2xl font-black text-white flex items-center gap-2"><BarChart3 size={24} className="text-cyan-400" /> Advanced Analytics</h2>
+                                    <p className="text-gray-500 text-xs">Real-time engagement, demographics, and sales performance.</p>
+                                </div>
+                                <button onClick={() => setShowAnalytics(false)} className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"><X size={20} /></button>
+                            </div>
+
+                            <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8 custom-scrollbar">
+                                {analyticsLoading ? (
+                                    <div className="h-full flex items-center justify-center"><Loader className="animate-spin text-cyan-500 w-10 h-10" /></div>
+                                ) : !analyticsData ? (
+                                    <div className="text-center py-20 text-gray-500 text-sm">Failed to load analytics data.</div>
+                                ) : (
+                                    <>
+                                        {/* Financial KPI */}
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                            <div className="bg-[#0B0F1A] border border-white/5 rounded-2xl p-6 relative overflow-hidden">
+                                                <h4 className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-2">Total Page Views</h4>
+                                                <p className="text-3xl font-black text-white">{analyticsData.totalViews > 0 ? analyticsData.totalViews.toLocaleString() : (analyticsData.timeline?.reduce((a: any, c: any) => a + c.total_views, 0).toLocaleString() || 0)}</p>
+                                            </div>
+                                            <div className="bg-[#0B0F1A] border border-white/5 rounded-2xl p-6 relative overflow-hidden">
+                                                <h4 className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-2">Ticket Revenue</h4>
+                                                <p className="text-3xl font-black text-green-400">৳{Number(analyticsData.finances?.total_ticket_revenue || 0).toLocaleString()}</p>
+                                            </div>
+                                            <div className="bg-[#0B0F1A] border border-white/5 rounded-2xl p-6 relative overflow-hidden">
+                                                <h4 className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-2">Sponsorships</h4>
+                                                <p className="text-3xl font-black text-amber-400">৳{Number(analyticsData.finances?.total_sponsorship_revenue || 0).toLocaleString()}</p>
+                                            </div>
+                                            <div className="bg-[#0B0F1A] border border-white/5 rounded-2xl p-6 relative overflow-hidden">
+                                                <h4 className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-2">Est. Payout</h4>
+                                                <p className="text-3xl font-black text-cyan-400">৳{Number(analyticsData.finances?.organizer_payout || 0).toLocaleString()}</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                            {/* Charts Mockups - Demographics */}
+                                            <div className="bg-[#0B0F1A] border border-white/5 rounded-2xl p-6">
+                                                <h3 className="font-bold mb-6 text-white text-lg">Ticket Sales Distribution</h3>
+                                                <div className="space-y-4">
+                                                    {(analyticsData.demographics || []).map((d: any) => (
+                                                        <div key={d.age_group}>
+                                                            <div className="flex justify-between text-sm mb-1">
+                                                                <span className="text-gray-400 font-semibold truncate max-w-[70%]">{d.age_group}</span>
+                                                                <span className="text-white font-bold">{d.percentage}%</span>
+                                                            </div>
+                                                            <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+                                                                <motion.div initial={{ width: 0 }} animate={{ width: `${d.percentage}%` }} transition={{ duration: 1, ease: 'easeOut' }} className="h-full bg-gradient-to-r from-purple-500 to-cyan-500" />
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {/* Daily Sales Trends */}
+                                            <div className="bg-[#0B0F1A] border border-white/5 rounded-2xl p-6">
+                                                <h3 className="font-bold mb-6 text-white text-lg">Sales Velocity (Last 5 Days)</h3>
+                                                <div className="h-48 flex items-end gap-2">
+                                                    {analyticsData.salesTrend?.length > 0 ? analyticsData.salesTrend.map((t: any) => {
+                                                        const max = Math.max(...analyticsData.salesTrend.map((x: any) => x.tickets_sold));
+                                                        return (
+                                                            <div key={t.date} className="flex-1 h-full flex flex-col justify-end group relative pt-6">
+                                                                <p className="absolute top-0 left-1/2 -translate-x-1/2 text-[10px] text-cyan-400 font-bold opacity-0 group-hover:opacity-100 transition-all whitespace-nowrap">{t.tickets_sold} tix</p>
+                                                                <motion.div initial={{ height: 0 }} animate={{ height: `${(t.tickets_sold / max) * 100}%` }} className="w-full bg-gradient-to-t from-cyan-500/20 to-cyan-500/60 hover:to-cyan-400 rounded-t-md border-t border-cyan-400/50 transition-colors" />
+                                                                <p className="text-center text-[9px] text-gray-500 mt-2 truncate w-full">{new Date(t.date).getDate()}/{new Date(t.date).getMonth() + 1}</p>
+                                                            </div>
+                                                        );
+                                                    }) : (
+                                                        <div className="w-full h-full flex flex-col items-center justify-center text-gray-600 border border-dashed border-white/10 rounded-xl">
+                                                            <span className="text-xl mb-2">📉</span>
+                                                            <p className="text-sm">Not enough data to map trends.</p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
         </div>
     );
 }

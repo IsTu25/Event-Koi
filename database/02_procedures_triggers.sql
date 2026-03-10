@@ -1,13 +1,6 @@
--- =====================================================
--- Event Koi - Stored Procedures & Triggers
--- File: 02_procedures_triggers.sql
--- =====================================================
+
 
 DELIMITER $$
-
--- =====================================================
--- STORED PROCEDURES
--- =====================================================
 
 -- 1. Book a ticket with transaction safety
 DROP PROCEDURE IF EXISTS sp_BookTicket$$
@@ -31,7 +24,6 @@ BEGIN
     
     START TRANSACTION;
     
-    -- Check ticket availability with row lock
     SELECT quantity, sold_count, price
     INTO v_available_quantity, v_sold_count, v_price
     FROM TicketTypes
@@ -42,21 +34,18 @@ BEGIN
         SET p_status = 'SOLD_OUT';
         ROLLBACK;
     ELSE
-        -- Generate unique code
         SET p_unique_code = UUID();
         
-        -- Insert booking
         INSERT INTO Bookings (user_id, event_id, ticket_type_id, unique_code, status, payment_status)
         VALUES (p_user_id, p_event_id, p_ticket_type_id, p_unique_code, 'VALID', 'COMPLETED');
         
         SET p_booking_id = LAST_INSERT_ID();
         
-        -- Update sold count
         UPDATE TicketTypes
         SET sold_count = sold_count + 1
         WHERE ticket_type_id = p_ticket_type_id;
         
-        -- Create notification
+    
         INSERT INTO Notifications (user_id, type, reference_id, content)
         VALUES (p_user_id, 'BOOKING_CONFIRMATION', p_booking_id, 
                 CONCAT('Your ticket has been confirmed! Booking ID: ', p_booking_id));
@@ -88,7 +77,7 @@ BEGIN
     
     START TRANSACTION;
     
-    -- Get booking details
+
     SELECT e.start_time, tt.price, b.status
     INTO v_event_start, v_ticket_price, v_current_status
     FROM Bookings b
@@ -115,7 +104,7 @@ BEGIN
         END IF;
         
         IF p_status IS NULL THEN
-            -- Update booking
+            
             UPDATE Bookings
             SET status = 'CANCELLED',
                 refund_amount = p_refund_amount,
@@ -123,7 +112,7 @@ BEGIN
                 payment_status = 'REFUNDED'
             WHERE booking_id = p_booking_id;
             
-            -- Decrease sold count
+            
             UPDATE TicketTypes tt
             JOIN Bookings b ON tt.ticket_type_id = b.ticket_type_id
             SET tt.sold_count = tt.sold_count - 1
@@ -323,7 +312,5 @@ END$$
 
 DELIMITER ;
 
--- =====================================================
--- PROCEDURES & TRIGGERS CREATED SUCCESSFULLY
--- =====================================================
+
 SELECT 'Stored procedures and triggers created successfully!' as Status;

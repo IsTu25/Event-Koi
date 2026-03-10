@@ -29,6 +29,13 @@ export async function GET(
             return NextResponse.json({ error: 'Event not found' }, { status: 404 });
         }
 
+        // Increment Views in background
+        pool.execute(`
+            INSERT INTO EventAnalytics (event_id, total_views, captured_date)
+            VALUES (?, 1, CURDATE())
+            ON DUPLICATE KEY UPDATE total_views = total_views + 1
+        `, [id]).catch(err => console.error("Error updating views:", err));
+
         return NextResponse.json(events[0]);
     } catch (error) {
         console.error('Error fetching event:', error);

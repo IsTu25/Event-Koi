@@ -15,6 +15,7 @@ export default function ProfilePage() {
     const [user, setUser] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState(false);
+    const [savingExtended, setSavingExtended] = useState(false);
 
     // Form State
     const [formData, setFormData] = useState({
@@ -22,6 +23,14 @@ export default function ProfilePage() {
         profile_image: null as File | null,
         organization_id_card: null as File | null,
         proof_document: null as File | null
+    });
+
+    const [extendedProfile, setExtendedProfile] = useState({
+        bio: '',
+        website_url: '',
+        location: '',
+        language_preference: 'en',
+        timezone: ''
     });
 
     useEffect(() => {
@@ -43,6 +52,20 @@ export default function ProfilePage() {
                 setFormData(prev => ({ ...prev, designation: data.designation || '' }));
             } else {
                 router.push('/login');
+            }
+
+            const extRes = await fetch(`/api/user-profiles?user_id=${userId}`);
+            if (extRes.ok) {
+                const extData = await extRes.json();
+                if (extData.bio !== undefined) {
+                    setExtendedProfile({
+                        bio: extData.bio || '',
+                        website_url: extData.website_url || '',
+                        location: extData.location || '',
+                        language_preference: extData.language_preference || 'en',
+                        timezone: extData.timezone || ''
+                    });
+                }
             }
         } catch (e) {
             console.error(e);
@@ -86,6 +109,29 @@ export default function ProfilePage() {
             alert('Error updating profile');
         } finally {
             setUploading(false);
+        }
+    };
+
+    const handleExtendedSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setSavingExtended(true);
+        try {
+            const res = await fetch('/api/user-profiles', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user_id: user.id,
+                    ...extendedProfile
+                })
+            });
+            if (res.ok) alert('Extended profile updated!');
+            else alert('Failed to update extended profile.');
+        } catch (e) {
+            console.error(e);
+            alert('Error updating extended profile.');
+        } finally {
+            setSavingExtended(false);
+            fetchData(user.id);
         }
     };
 
@@ -245,6 +291,99 @@ export default function ProfilePage() {
                                             <>
                                                 <CheckCircle className="w-5 h-5" />
                                                 Save Profile Changes
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </form>
+                        </motion.div>
+
+                        {/* Extended User Profile */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.25 }}
+                            className="bg-[#161B2B] border border-white/5 rounded-3xl p-8"
+                        >
+                            <div className="flex items-center gap-4 mb-8">
+                                <div className="p-3 rounded-2xl bg-amber-500/10 text-amber-400">
+                                    <User size={24} />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-bold text-white">Extended Profile</h3>
+                                    <p className="text-gray-400 text-sm">Rich bio, links, and public profile data</p>
+                                </div>
+                            </div>
+
+                            <form onSubmit={handleExtendedSubmit} className="space-y-6">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-400 mb-2">Short Bio</label>
+                                    <textarea
+                                        className="w-full bg-[#0B0F1A] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-amber-500/50 transition-colors resize-none min-h-[100px]"
+                                        value={extendedProfile.bio}
+                                        onChange={(e) => setExtendedProfile({ ...extendedProfile, bio: e.target.value })}
+                                        placeholder="Tell us a little bit about yourself..."
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-400 mb-2">Personal Website</label>
+                                        <input
+                                            type="url"
+                                            className="w-full bg-[#0B0F1A] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-amber-500/50 transition-colors"
+                                            value={extendedProfile.website_url}
+                                            onChange={(e) => setExtendedProfile({ ...extendedProfile, website_url: e.target.value })}
+                                            placeholder="https://..."
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-400 mb-2">Location</label>
+                                        <input
+                                            type="text"
+                                            className="w-full bg-[#0B0F1A] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-amber-500/50 transition-colors"
+                                            value={extendedProfile.location}
+                                            onChange={(e) => setExtendedProfile({ ...extendedProfile, location: e.target.value })}
+                                            placeholder="City, Country"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-400 mb-2">Timezone</label>
+                                        <input
+                                            type="text"
+                                            className="w-full bg-[#0B0F1A] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-amber-500/50 transition-colors"
+                                            value={extendedProfile.timezone}
+                                            onChange={(e) => setExtendedProfile({ ...extendedProfile, timezone: e.target.value })}
+                                            placeholder="e.g. UTC+6"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-400 mb-2">Language</label>
+                                        <input
+                                            type="text"
+                                            className="w-full bg-[#0B0F1A] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-amber-500/50 transition-colors"
+                                            value={extendedProfile.language_preference}
+                                            onChange={(e) => setExtendedProfile({ ...extendedProfile, language_preference: e.target.value })}
+                                            placeholder="e.g. en or bn"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="pt-4">
+                                    <button
+                                        type="submit"
+                                        disabled={savingExtended}
+                                        className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-amber-500/20 transition-all hover:scale-[1.01] disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center gap-3"
+                                    >
+                                        {savingExtended ? (
+                                            <>
+                                                <Loader className="w-5 h-5 animate-spin" />
+                                                Saving Bio...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <CheckCircle className="w-5 h-5" />
+                                                Save Extended Profile
                                             </>
                                         )}
                                     </button>
@@ -655,8 +794,8 @@ function ChatWindow({ friend, userId, onClose }: { friend: any, userId: string, 
                         return (
                             <div key={msg.message_id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                                 <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm ${isMe
-                                        ? 'bg-cyan-600 text-white rounded-tr-sm'
-                                        : 'bg-[#1F2937] text-gray-200 rounded-tl-sm'
+                                    ? 'bg-cyan-600 text-white rounded-tr-sm'
+                                    : 'bg-[#1F2937] text-gray-200 rounded-tl-sm'
                                     }`}>
                                     <p>{msg.content}</p>
                                     <span className={`text-[9px] block text-right mt-1 ${isMe ? 'text-cyan-200' : 'text-gray-500'}`}>
