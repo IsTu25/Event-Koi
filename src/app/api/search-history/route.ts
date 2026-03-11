@@ -9,10 +9,10 @@ export async function GET(request: Request) {
 
     try {
         const [rows] = await pool.query(`
-            SELECT query, filters, results_count, created_at
+            SELECT search_query as \`query\`, search_type as \`filters\`, results_count, searched_at as \`created_at\`
             FROM SearchHistory
             WHERE user_id = ?
-            ORDER BY created_at DESC
+            ORDER BY searched_at DESC
             LIMIT 30
         `, [userId]);
         return NextResponse.json(rows);

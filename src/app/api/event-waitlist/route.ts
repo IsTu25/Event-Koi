@@ -46,8 +46,8 @@ export async function POST(request: Request) {
         const nextPos = Number(maxPos[0]?.max_pos || 0) + 1;
 
         await pool.execute(`
-            INSERT INTO EventWaitlist (user_id, event_id, ticket_type_id, position_in_queue, status)
-            VALUES (?, ?, ?, ?, 'Waiting')
+            INSERT INTO EventWaitlist (user_id, event_id, ticket_type_id, position_in_queue)
+            VALUES (?, ?, ?, ?)
         `, [user_id, event_id, ticket_type_id, nextPos]);
 
         return NextResponse.json({ message: 'Joined waitlist successfully', position: nextPos }, { status: 201 });
