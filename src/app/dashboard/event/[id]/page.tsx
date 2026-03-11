@@ -8,7 +8,7 @@ import {
     Calendar, MapPin, Clock, User, Heart, MessageCircle, Send,
     Share2, Trash2, Edit2, CheckCircle, XCircle, DollarSign,
     Ticket, Image as ImageIcon, Briefcase, Plus, Loader, ArrowLeft,
-    Megaphone, ThumbsUp, MessageSquare, BarChart3, X
+    Megaphone, ThumbsUp, MessageSquare, BarChart3, X, Star, Tag
 } from 'lucide-react';
 
 export default function EventDetails() {
@@ -21,6 +21,8 @@ export default function EventDetails() {
     const [ticketTypes, setTicketTypes] = useState<any[]>([]);
     const [sponsors, setSponsors] = useState<any[]>([]);
     const [waitlistItems, setWaitlistItems] = useState<any[]>([]);
+    const [eventTags, setEventTags] = useState<any[]>([]);
+    const [eventReviews, setEventReviews] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     // Ticket Creation State
@@ -85,17 +87,21 @@ export default function EventDetails() {
         if (!u?.id) return;
 
         try {
-            const [eventRes, ticketsRes, sponsorsRes, waitlistRes] = await Promise.all([
+            const [eventRes, ticketsRes, sponsorsRes, waitlistRes, tagsRes, reviewsRes] = await Promise.all([
                 fetch(`/api/events/${eventId}`),
                 fetch(`/api/ticket-types?event_id=${eventId}`),
                 fetch(`/api/sponsors?event_id=${eventId}`),
-                fetch(`/api/event-waitlist?user_id=${u.id}&event_id=${eventId}`)
+                fetch(`/api/event-waitlist?user_id=${u.id}&event_id=${eventId}`),
+                fetch(`/api/event-tags?event_id=${eventId}`),
+                fetch(`/api/event-reviews?event_id=${eventId}`)
             ]);
 
             if (eventRes.ok) setEvent(await eventRes.json());
             if (ticketsRes.ok) setTicketTypes(await ticketsRes.json());
             if (sponsorsRes.ok) setSponsors(await sponsorsRes.json());
             if (waitlistRes.ok) setWaitlistItems(await waitlistRes.json());
+            if (tagsRes.ok) setEventTags(await tagsRes.json());
+            if (reviewsRes.ok) setEventReviews(await reviewsRes.json());
         } catch (error) {
             console.error('Error fetching data:', error);
         } finally {
@@ -263,6 +269,11 @@ export default function EventDetails() {
                                                 {event.category_name}
                                             </span>
                                         )}
+                                        {eventTags.map((tag: any) => (
+                                            <span key={tag.tag_id} className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] uppercase font-bold tracking-wider bg-white/5 text-gray-400 border border-white/10">
+                                                <Tag size={10} /> {tag.tag_name}
+                                            </span>
+                                        ))}
                                     </div>
                                     <h1 className="text-4xl lg:text-5xl font-black text-white leading-tight">
                                         {event.title}
@@ -390,6 +401,44 @@ export default function EventDetails() {
                                             {s.logo_url && <img src={s.logo_url} className="h-10 object-contain mb-3" />}
                                             <p className="font-bold text-white text-sm">{s.name}</p>
                                             <span className="text-[10px] text-gray-500 uppercase tracking-wider">{s.tier}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Event Reviews Display */}
+                        <div className="bg-[#161B2B] border border-white/5 rounded-3xl p-8">
+                            <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                                <span className="p-2 rounded-lg bg-orange-500/10 text-orange-400"><Star size={20} /></span>
+                                Attendee Reviews
+                            </h3>
+                            {eventReviews.length === 0 ? (
+                                <div className="text-center py-8 bg-[#0B0F1A] rounded-xl border border-white/5 border-dashed">
+                                    <p className="text-gray-500 text-sm">No reviews yet. Be the first!</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    {eventReviews.map((review: any) => (
+                                        <div key={review.review_id} className="p-5 rounded-xl bg-[#0B0F1A] border border-white/5">
+                                            <div className="flex justify-between items-start mb-3">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 rounded-full bg-white/10 overflow-hidden">
+                                                        {review.profile_image ? <img src={review.profile_image} className="w-full object-cover h-full" /> : <div className="flex justify-center items-center h-full"><User size={14} className="text-gray-500" /></div>}
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-bold text-white leading-none mb-1">{review.user_name}</p>
+                                                        <div className="flex text-amber-500">
+                                                            {[...Array(5)].map((_, i) => (
+                                                                <Star key={i} size={12} className={i < review.rating ? "fill-current" : "text-gray-600"} />
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <span className="text-[10px] text-gray-500">{new Date(review.review_date).toLocaleDateString()}</span>
+                                            </div>
+                                            {review.title && <p className="font-bold text-white text-sm mb-1">{review.title}</p>}
+                                            {review.content && <p className="text-gray-400 text-sm leading-relaxed">{review.content}</p>}
                                         </div>
                                     ))}
                                 </div>
