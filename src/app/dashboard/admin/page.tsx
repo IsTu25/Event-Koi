@@ -8,11 +8,11 @@ import {
     TrendingUp, Activity, Lock, AlertTriangle, DollarSign, BarChart2,
     Search, ArrowLeft, ChevronRight, Bell, RefreshCw, Ban,
     Eye, Trash2, Gavel, Flag, Database, Settings, Download,
-    BookOpen, UserX, Clock, Star, Zap, Globe
+    BookOpen, UserX, Clock, Star, Zap, Globe, Mail
 } from 'lucide-react';
 import Link from 'next/link';
 
-type Tab = 'overview' | 'users' | 'events' | 'requests' | 'moderation' | 'reports' | 'finance' | 'analytics' | 'logs' | 'sponsorships' | 'social' | 'system' | 'intelligence';
+type Tab = 'overview' | 'users' | 'events' | 'requests' | 'moderation' | 'reports' | 'finance' | 'analytics' | 'logs' | 'sponsorships' | 'social' | 'system' | 'intelligence' | 'campaigns';
 
 export default function AdminDashboard() {
     const router = useRouter();
@@ -30,6 +30,7 @@ export default function AdminDashboard() {
     const [refunds, setRefunds] = useState<any[]>([]);
     const [logs, setLogs] = useState<any[]>([]);
     const [auditLog, setAuditLog] = useState<any[]>([]);
+    const [campaigns, setCampaigns] = useState<any[]>([]);
 
     // New data states for full table coverage
     const [sponsorshipData, setSponsorshipData] = useState<any>(null);
@@ -55,7 +56,7 @@ export default function AdminDashboard() {
     const loadAll = useCallback(async (adminId?: string) => {
         setRefreshing(true);
         try {
-            const [analyticsRes, usersRes, eventsRes, reqRes, reportsRes, refundsRes, logsRes, auditRes, sponsorRes, sysCatRes, sysVenRes, sysRoleRes, sysAdmRes, socialRes, intelRes, userAnalyticsRes] = await Promise.allSettled([
+            const [analyticsRes, usersRes, eventsRes, reqRes, reportsRes, refundsRes, logsRes, auditRes, sponsorRes, sysCatRes, sysVenRes, sysRoleRes, sysAdmRes, socialRes, intelRes, userAnalyticsRes, campaignsRes] = await Promise.allSettled([
                 fetch('/api/analytics/platform?days=30'),
                 fetch('/api/users'),
                 fetch('/api/events'),
@@ -72,6 +73,7 @@ export default function AdminDashboard() {
                 fetch('/api/admin/social'),
                 fetch('/api/admin/intelligence'),
                 fetch('/api/admin/users/analytics'),
+                fetch('/api/admin/campaigns'),
             ]);
 
             if (analyticsRes.status === 'fulfilled' && analyticsRes.value.ok) setAnalytics(await analyticsRes.value.json());
@@ -86,6 +88,7 @@ export default function AdminDashboard() {
             if (socialRes.status === 'fulfilled' && socialRes.value.ok) setSocialData(await socialRes.value.json());
             if (intelRes.status === 'fulfilled' && intelRes.value.ok) setIntelData(await intelRes.value.json());
             if (userAnalyticsRes.status === 'fulfilled' && userAnalyticsRes.value.ok) setUserAnalyticsData(await userAnalyticsRes.value.json());
+            if (campaignsRes.status === 'fulfilled' && campaignsRes.value.ok) setCampaigns(await campaignsRes.value.json());
 
             // Set System Data
             const sysData: any = { categories: [], venues: [], roles: [], adminUsers: [] };
@@ -175,6 +178,7 @@ export default function AdminDashboard() {
         { id: 'sponsorships', label: 'Sponsorships', icon: Zap, badge: sponsorshipData?.sponsorships?.filter((s: any) => s.status === 'PENDING').length },
         { id: 'social', label: 'Engagement', icon: Globe },
         { id: 'intelligence', label: 'Intelligence', icon: Download },
+        { id: 'campaigns', label: 'Campaigns', icon: Mail, badge: campaigns.length },
         { id: 'system', label: 'Structure', icon: Settings },
         { id: 'moderation', label: 'Moderation', icon: Gavel },
         { id: 'analytics', label: 'Analytics', icon: TrendingUp },
@@ -922,6 +926,85 @@ export default function AdminDashboard() {
                         </motion.div>
                     )}
 
+                    {/* ======================== CAMPAIGNS ======================== */}
+                    {activeTab === 'campaigns' && (
+                        <motion.div key="campaigns" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+                            <div className="bg-[#161B2B] border border-white/5 rounded-2xl overflow-hidden">
+                                <div className="p-6 border-b border-white/5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                                    <div>
+                                        <h2 className="font-bold text-white text-lg flex items-center gap-2"><Mail size={18} className="text-pink-500" /> Platform Campaigns</h2>
+                                        <p className="text-gray-500 text-sm mt-1">Cross-platform marketing broadcast tracker</p>
+                                    </div>
+                                    <Link href="/dashboard/campaigns">
+                                        <button className="px-4 py-2 bg-pink-500/10 hover:bg-pink-500/20 text-pink-500 border border-pink-500/20 font-bold text-xs rounded-xl transition-colors">
+                                            Open Organizer Hub
+                                        </button>
+                                    </Link>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6 border-b border-white/5 bg-[#0B0F1A]">
+                                    <div className="bg-[#161B2B] p-4 rounded-xl border border-white/5">
+                                        <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Total Broadcasted</p>
+                                        <p className="text-3xl font-black text-white">{campaigns.filter(c => c.status === 'SENT').length}</p>
+                                    </div>
+                                    <div className="bg-[#161B2B] p-4 rounded-xl border border-white/5">
+                                        <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Audience Reached</p>
+                                        <p className="text-3xl font-black text-cyan-400">{campaigns.reduce((sum, c) => sum + (c.total_sent || 0), 0)}</p>
+                                    </div>
+                                    <div className="bg-[#161B2B] p-4 rounded-xl border border-white/5">
+                                        <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Active Drafts</p>
+                                        <p className="text-3xl font-black text-orange-400">{campaigns.filter(c => c.status === 'DRAFT').length}</p>
+                                    </div>
+                                </div>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full">
+                                        <thead>
+                                            <tr className="border-b border-white/5 bg-[#0B0F1A]">
+                                                {['Campaign', 'Target', 'Status', 'Performance', 'Organizer', 'Date'].map(h => (
+                                                    <th key={h} className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">{h}</th>
+                                                ))}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {campaigns.map((c, i) => (
+                                                <motion.tr key={c.campaign_id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.02 }}
+                                                    className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                                                    <td className="px-6 py-4">
+                                                        <p className="text-sm font-semibold text-white max-w-[200px] truncate">{c.campaign_name}</p>
+                                                        <p className="text-[11px] text-gray-500 truncate max-w-[200px]">Sub: {c.subject}</p>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <span className="px-2 py-0.5 rounded uppercase text-[10px] font-bold bg-white/5 text-gray-400 border border-white/10">{c.target_audience.replace('_', ' ')}</span>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <span className={`px-2 py-0.5 rounded-full uppercase text-[10px] font-bold border ${c.status === 'SENT' ? 'bg-green-500/10 text-green-500 border-green-500/20' : 'bg-gray-500/10 text-gray-500 border-gray-500/20'}`}>
+                                                            {c.status}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        {c.status === 'SENT' ? (
+                                                            <div>
+                                                                <p className="text-sm font-bold text-cyan-400">{c.total_sent} Sent</p>
+                                                                <p className="text-[11px] text-gray-500">{c.opened} Opened ({(c.opened / c.total_sent * 100).toFixed(0)}%)</p>
+                                                            </div>
+                                                        ) : (
+                                                            <p className="text-xs text-gray-600">Pending</p>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <p className="text-sm text-gray-300 font-medium">{c.organizer_name || 'System'}</p>
+                                                        <p className="text-[11px] text-gray-500">{c.organizer_email}</p>
+                                                    </td>
+                                                    <td className="px-6 py-4 text-xs text-gray-500">{new Date(c.created_at).toLocaleDateString()}</td>
+                                                </motion.tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                    {campaigns.length === 0 && <EmptyState message="No campaigns broadcasted across the platform yet." />}
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+
                     {/* ======================== SYSTEM STRUCTURE ================= */}
                     {activeTab === 'system' && (
                         <motion.div key="system" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -985,7 +1068,7 @@ export default function AdminDashboard() {
                     )}
                 </AnimatePresence>
             </div>
-        </div>
+        </div >
     );
 }
 
@@ -1056,7 +1139,7 @@ function SimpleBarChart({ data, valueKey, labelKey, color }: { data: any[]; valu
             {recent.map((d: any, i: number) => {
                 const pct = (Number(d[valueKey]) / max) * 100;
                 return (
-                    <div key={i} className="flex-1 flex flex-col items-center justify-end gap-1 group relative">
+                    <div key={i} className="flex-1 h-full flex flex-col items-center justify-end gap-1 group relative">
                         <div className="absolute bottom-full mb-1 opacity-0 group-hover:opacity-100 transition-opacity bg-black/80 text-white text-[10px] rounded px-1.5 py-0.5 whitespace-nowrap pointer-events-none">
                             {d[valueKey]}
                         </div>
