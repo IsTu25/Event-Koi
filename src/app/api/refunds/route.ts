@@ -13,18 +13,17 @@ export async function GET(request: Request) {
                    u.name  AS requester_name,
                    u.email AS requester_email,
                    e.title AS event_title,
-                   adm.name AS reviewed_by_name
+                   NULL AS reviewed_by_name
             FROM Refunds r
-            LEFT JOIN Users u   ON r.user_id   = u.id
+            LEFT JOIN Users u   ON r.requested_by = u.id
             LEFT JOIN Bookings b ON r.booking_id = b.booking_id
             LEFT JOIN Events e   ON b.event_id   = e.event_id
-            LEFT JOIN Users adm  ON r.reviewed_by = adm.id
             WHERE 1=1
         `;
         const params: any[] = [];
-        if (userId) { query += ' AND r.user_id = ?'; params.push(userId); }
+        if (userId) { query += ' AND r.requested_by = ?'; params.push(userId); }
         if (bookingId) { query += ' AND r.booking_id = ?'; params.push(bookingId); }
-        query += ' ORDER BY r.created_at DESC';
+        query += ' ORDER BY r.requested_date DESC';
 
         const [rows] = await pool.query(query, params);
         return NextResponse.json(rows);
@@ -46,9 +45,9 @@ export async function POST(request: Request) {
         }
 
         const [result] = await pool.execute(`
-            INSERT INTO Refunds (booking_id, user_id, amount, reason, status)
-            VALUES (?, ?, ?, ?, 'REQUESTED')
-        `, [booking_id, user_id, amount, reason || null]);
+            INSERT INTO Refunds (booking_id, amount, reason, status, requested_by)
+            VALUES (?, ?, ?, 'Pending', ?)
+        `, [booking_id, amount, reason || null, user_id]);
 
         // Update booking status
         await pool.execute(
@@ -81,13 +80,13 @@ export async function PUT(request: Request) {
 
         await pool.execute(`
             UPDATE Refunds
-            SET status = ?, reviewed_by = ?, reviewed_at = NOW(),
-                processed_at = ?, rejection_reason = ?
+            SET status = ?, processed_at = NOW(),
+                notes = ?
             WHERE refund_id = ?
-        `, [status, admin_id, processed_at, rejection_reason || null, refund_id]);
+        `, [status, rejection_reason || null, refund_id]);
 
         // Fetch to notify user
-        const [refundRow] = await pool.query('SELECT user_id, amount FROM Refunds WHERE refund_id = ?', [refund_id]);
+        const [refundRow] = await pool.query('SELECT requested_by as user_id, amount FROM Refunds WHERE refund_id = ?', [refund_id]);
         const refund = (refundRow as any[])[0];
         if (refund) {
             const msg = status === 'COMPLETED'
@@ -101,7 +100,7 @@ export async function PUT(request: Request) {
 
         // Log admin action
         await pool.execute(
-            'INSERT INTO AdminAuditLog (admin_id, action, entity_type, entity_id, notes) VALUES (?, ?, ?, ?, ?)',
+            'INSERT INTO AdminAuditLog (admin_user_id, action_type, entity_type, entity_id, description) VALUES (?, ?, ?, ?, ?)',
             [admin_id, `REFUND_${status}`, 'Refunds', refund_id, rejection_reason || null]
         );
 

@@ -8,6 +8,7 @@ import {
     CheckCircle, Clock, Trash2, Edit3, Loader, Save, X
 } from 'lucide-react';
 import Link from 'next/link';
+import { DashboardNavbar } from '@/components/dashboard-navbar';
 
 export default function SponsorshipManagement() {
     const router = useRouter();
@@ -16,6 +17,8 @@ export default function SponsorshipManagement() {
     const [packages, setPackages] = useState<any[]>([]);
     const [myEvents, setMyEvents] = useState<any[]>([]);
     const [sponsorships, setSponsorships] = useState<any[]>([]);
+    const [pendingSponsors, setPendingSponsors] = useState<any[]>([]);
+    const [selectedTiers, setSelectedTiers] = useState<{ [key: string]: string }>({});
     const [isAdding, setIsAdding] = useState(false);
 
     // Form state
@@ -49,6 +52,7 @@ export default function SponsorshipManagement() {
                 const data = await sponsorRes.json();
                 setPackages(data.packages || []);
                 setSponsorships(data.sponsorships || []);
+                setPendingSponsors(data.pendingSponsors || []);
             }
             if (eventsRes.ok) setMyEvents(await eventsRes.json());
         } catch (e) { console.error(e); }
@@ -88,12 +92,10 @@ export default function SponsorshipManagement() {
             </div>
 
             <div className="relative z-10 max-w-6xl mx-auto p-6 lg:p-10">
-                <header className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+                <DashboardNavbar user={user} />
+
+                <header className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-white/5 pb-8">
                     <div>
-                        <Link href="/dashboard" className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-6 group">
-                            <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
-                            Back to Dashboard
-                        </Link>
                         <h1 className="text-4xl font-black text-white flex items-center gap-3">
                             Sponsorship <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400">Hub</span>
                         </h1>
@@ -146,7 +148,71 @@ export default function SponsorshipManagement() {
                             )}
                         </div>
 
-                        <h2 className="text-xl font-bold flex items-center gap-2 pt-6">
+                        {pendingSponsors.length > 0 && (
+                            <div className="pt-6 space-y-6">
+                                <h2 className="text-xl font-bold flex items-center gap-2">
+                                    <Clock className="text-amber-400" size={20} />
+                                    Pending Sponsorship Applications
+                                </h2>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {pendingSponsors.map(s => (
+                                        <motion.div key={s.sponsor_id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} className="bg-[#161B2B] border border-white/5 rounded-2xl p-5 space-y-4">
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <p className="font-bold text-white mb-0.5">{s.name}</p>
+                                                    <p className="text-[10px] text-gray-500 uppercase font-bold tracking-tight">{s.event_title}</p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-green-400 font-bold">৳{Number(s.contribution_amount).toLocaleString()}</p>
+                                                    <select
+                                                        className="mt-2 bg-[#0B0F1A] border border-white/10 rounded-lg px-2 py-1 text-[10px] text-white outline-none focus:border-purple-500/50"
+                                                        value={selectedTiers[s.sponsor_id] || s.tier}
+                                                        onChange={(e) => setSelectedTiers({ ...selectedTiers, [s.sponsor_id]: e.target.value })}
+                                                    >
+                                                        <option>Partner</option>
+                                                        <option>Bronze</option>
+                                                        <option>Silver</option>
+                                                        <option>Gold</option>
+                                                        <option>Platinum</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={async () => {
+                                                        const tier = selectedTiers[s.sponsor_id] || s.tier;
+                                                        await fetch('/api/sponsors', {
+                                                            method: 'PUT',
+                                                            headers: { 'Content-Type': 'application/json' },
+                                                            body: JSON.stringify({ sponsor_id: s.sponsor_id, status: 'APPROVED', tier: tier })
+                                                        });
+                                                        loadData(user.id);
+                                                    }}
+                                                    className="flex-1 py-2 bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/20 rounded-xl text-xs font-bold transition-all"
+                                                >
+                                                    Approve as {selectedTiers[s.sponsor_id] || s.tier}
+                                                </button>
+                                                <button
+                                                    onClick={async () => {
+                                                        await fetch('/api/sponsors', {
+                                                            method: 'PUT',
+                                                            headers: { 'Content-Type': 'application/json' },
+                                                            body: JSON.stringify({ sponsor_id: s.sponsor_id, status: 'REJECTED' })
+                                                        });
+                                                        loadData(user.id);
+                                                    }}
+                                                    className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-xl text-xs font-bold transition-all"
+                                                >
+                                                    Reject
+                                                </button>
+                                            </div>
+                                        </motion.div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        <h2 className="text-xl font-bold flex items-center gap-2 pt-10">
                             <CheckCircle className="text-green-400" size={20} />
                             Active Sponsor Agreements
                         </h2>

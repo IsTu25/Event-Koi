@@ -11,17 +11,17 @@ export async function GET(request: Request) {
     try {
         // AdminAuditLog.admin_id → Users.id  (LEFT JOIN so missing rows don't break it)
         let query = `
-            SELECT al.*,
-                   u.name  AS admin_name,
-                   u.email AS admin_email
+            SELECT al.log_id, al.action_type AS action, al.entity_type, al.entity_id, 
+                   al.description AS notes, al.timestamp AS created_at,
+                   u.name AS admin_name, u.email AS admin_email
             FROM AdminAuditLog al
-            LEFT JOIN Users u ON al.admin_id = u.id
+            LEFT JOIN Users u ON al.admin_user_id = u.id
             WHERE 1=1
         `;
         const params: any[] = [];
-        if (adminId) { query += ' AND al.admin_id = ?'; params.push(adminId); }
+        if (adminId) { query += ' AND al.admin_user_id = ?'; params.push(adminId); }
         if (entityType) { query += ' AND al.entity_type = ?'; params.push(entityType); }
-        query += ` ORDER BY al.created_at DESC LIMIT ${Math.min(limit, 1000)}`;
+        query += ` ORDER BY al.timestamp DESC LIMIT ${Math.min(limit, 1000)}`;
 
         const [rows] = await pool.query(query, params);
         return NextResponse.json(rows);

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
+import { getNotificationTemplate } from '@/lib/config';
 
 // GET /api/admin/moderation?user_id=X (active moderations for a user)
 export async function GET(request: Request) {
@@ -78,19 +79,22 @@ export async function POST(request: Request) {
 
             // Record action in Audit Log
             await connection.execute(
-                'INSERT INTO AdminAuditLog (admin_id, action, entity_type, entity_id, notes) VALUES (?, ?, ?, ?, ?)',
+                'INSERT INTO AdminAuditLog (admin_user_id, action_type, entity_type, entity_id, description) VALUES (?, ?, ?, ?, ?)',
                 [admin_id, action, 'USER', user_id, reason || null]
             );
 
-            // Notify user
-            const actionMsg: Record<string, string> = {
-                WARNING: '⚠️ Warning issued for account conduct.',
-                SUSPENSION: '🔒 Account temporarily suspended.',
-                BAN: '🚫 Account permanently banned.',
+            // Notify user — message from NotificationTemplate
+            const actionTypeMap: Record<string, string> = {
+                WARNING: 'MODERATION_WARN',
+                SUSPENSION: 'MODERATION_SUSPEND',
+                BAN: 'MODERATION_BAN',
             };
+            const notifMessage = await getNotificationTemplate(
+                actionTypeMap[action] || 'EVENT_UPDATE'
+            );
             await connection.execute(
                 'INSERT INTO Notifications (user_id, type, reference_id, content) VALUES (?, ?, ?, ?)',
-                [user_id, 'SYSTEM', user_id, actionMsg[action] || 'Security action taken on account.']
+                [user_id, 'EVENT_UPDATE', user_id, notifMessage]
             );
 
             await connection.commit();
@@ -104,5 +108,69 @@ export async function POST(request: Request) {
     } catch (error) {
         console.error('UserModeration POST error:', error);
         return NextResponse.json({ error: 'Failed to apply moderation' }, { status: 500 });
+    }
+}
+export async function PUT(request: Request) {
+    try {
+        const { user_id, admin_id, action } = await request.json();
+        if (!user_id || !admin_id || !action) {
+            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        }
+
+        const connection = await pool.getConnection();
+        try {
+            await connection.beginTransaction();
+
+            if (action === 'UNSUSPEND') {
+                await connection.execute(`
+                    UPDATE UserModeration 
+                    SET is_suspended = 0, suspension_reason = NULL, suspension_end = NOW()
+                    WHERE user_id = ?
+                `, [user_id]);
+            } else if (action === 'UNBAN') {
+                await connection.execute(`
+                    UPDATE UserModeration 
+                    SET is_banned = 0, ban_reason = NULL
+                    WHERE user_id = ?
+                `, [user_id]);
+            } else if (action === 'CLEAR_WARNINGS') {
+                await connection.execute(`
+                    UPDATE UserModeration 
+                    SET warning_level = 0
+                    WHERE user_id = ?
+                `, [user_id]);
+            }
+
+            // Record action in Audit Log
+            await connection.execute(
+                'INSERT INTO AdminAuditLog (admin_user_id, action_type, entity_type, entity_id, description) VALUES (?, ?, ?, ?, ?)',
+                [admin_id, action, 'USER', user_id, `Revoked ${action}`]
+            );
+
+            if (['UNBAN', 'UNSUSPEND'].includes(action)) {
+                const revokeTypeMap: Record<string, string> = {
+                    UNSUSPEND: 'MODERATION_UNSUSPEND',
+                    UNBAN: 'MODERATION_UNBAN',
+                };
+                const revokeMessage = await getNotificationTemplate(
+                    revokeTypeMap[action] || 'EVENT_UPDATE'
+                );
+                await connection.execute(
+                    'INSERT INTO Notifications (user_id, type, reference_id, content) VALUES (?, ?, ?, ?)',
+                    [user_id, 'EVENT_UPDATE', user_id, revokeMessage]
+                );
+            }
+
+            await connection.commit();
+            return NextResponse.json({ message: `${action} applied successfully` });
+        } catch (error) {
+            await connection.rollback();
+            throw error;
+        } finally {
+            connection.release();
+        }
+    } catch (error) {
+        console.error('UserModeration PUT error:', error);
+        return NextResponse.json({ error: 'Failed' }, { status: 500 });
     }
 }

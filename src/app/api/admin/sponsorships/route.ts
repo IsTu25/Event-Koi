@@ -9,10 +9,10 @@ export async function GET() {
             FROM Sponsors s
             JOIN Events e ON s.event_id = e.event_id
             JOIN Users u ON e.organizer_id = u.id
-            ORDER BY s.created_at DESC
+            ORDER BY s.contribution_amount DESC
         `);
         const [sponsorships] = await pool.query(`
-            SELECT es.*, s.name AS sponsor_name, e.title AS event_title, sp.name AS package_name
+            SELECT es.*, s.name AS sponsor_name, s.tier, e.title AS event_title, sp.name AS package_name
             FROM EventSponsorships es
             JOIN Sponsors s ON es.sponsor_id = s.sponsor_id
             JOIN Events e ON es.event_id = e.event_id

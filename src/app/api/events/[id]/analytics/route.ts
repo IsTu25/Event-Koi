@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
+import { getConfigNumber } from '@/lib/config';
 
 export async function GET(request: Request, context: any) {
     try {
@@ -53,19 +54,25 @@ export async function GET(request: Request, context: any) {
         `, [eventId]);
 
         const [sponsorTotals]: any = await pool.query(`
-            SELECT COALESCE(SUM(amount_paid), 0) as total_sponsorship_revenue
-            FROM EventSponsorships
-            WHERE event_id = ? AND payment_status = 'Completed'
-        `, [eventId]);
+            SELECT 
+                (SELECT COALESCE(SUM(amount_paid), 0) FROM EventSponsorships WHERE event_id = ? AND payment_status = 'Completed') +
+                (SELECT COALESCE(SUM(contribution_amount), 0) FROM Sponsors WHERE event_id = ? AND status = 'APPROVED')
+            as total_sponsorship_revenue
+        `, [eventId, eventId]);
 
         const ticketRev = parseFloat(ticketTotals[0].total_ticket_revenue);
         const sponsorRev = parseFloat(sponsorTotals[0].total_sponsorship_revenue);
 
-        // Assume 10% platform fee if not defined differently
+        // Fetch real-time fees from configuration table
+        const platformFeePercent = await getConfigNumber('PLATFORM_FEE_PERCENT', 0.05); // Default 5%
+        const platformFeeAmount = ticketRev * platformFeePercent;
+        const netRevenue = (ticketRev + sponsorRev) - platformFeeAmount;
+
         const finances = {
             total_ticket_revenue: ticketRev,
             total_sponsorship_revenue: sponsorRev,
-            organizer_payout: (ticketRev + sponsorRev) * 0.9
+            platform_fee: platformFeeAmount,
+            net_revenue: netRevenue
         };
 
         // 5. Total Views. Calculate from EventAnalytics, but if zero, generate a mock or calculate ticket bought equivalent so it's not 0

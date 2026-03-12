@@ -137,12 +137,12 @@ export async function GET(request: Request) {
     try {
         const query = `
             SELECT
-                b.booking_id, b.unique_code, b.status, b.created_at AS purchase_date,
+                b.booking_id, b.unique_code, b.status, b.refund_amount, b.created_at AS purchase_date,
                 b.payment_status, b.payment_method,
                 e.title AS event_title, e.start_time, e.end_time, e.banner_image,
                 v.name AS venue_name, v.city AS venue_city,
                 tt.name AS ticket_name, tt.price,
-                t.ticket_number, t.qr_code, t.status AS ticket_status
+                t.ticket_id, t.ticket_number, t.qr_code, t.status AS ticket_status
             FROM Bookings b
             JOIN Events e ON b.event_id = e.event_id
             JOIN TicketTypes tt ON b.ticket_type_id = tt.ticket_type_id

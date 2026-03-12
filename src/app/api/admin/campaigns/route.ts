@@ -6,7 +6,10 @@ export async function GET(request: Request) {
     try {
         const [campaigns] = await pool.query(`
             SELECT c.*, 
-                   s.total_sent, s.opened, s.clicked, s.failed,
+                   COALESCE(s.total_sent, 0) AS total_sent, 
+                   COALESCE(s.opened, 0) AS opened, 
+                   COALESCE(s.clicked, 0) AS clicked, 
+                   COALESCE(s.failed, 0) AS failed,
                    u.name AS organizer_name,
                    u.email AS organizer_email
             FROM EmailCampaigns c

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Bell, Eye, Globe, Palette, Save, Check, Shield } from 'lucide-react';
 import Link from 'next/link';
+import { DashboardNavbar } from '@/components/dashboard-navbar';
 
 export default function SettingsPage() {
     const router = useRouter();
@@ -107,17 +108,12 @@ export default function SettingsPage() {
             </div>
 
             <div className="relative z-10 max-w-3xl mx-auto p-6 lg:p-10">
-                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-                    <Link href="/dashboard/profile" className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors group">
-                        <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
-                        Back to Profile
-                    </Link>
-                </motion.div>
+                <DashboardNavbar user={user} />
 
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+                <div className="mb-8 border-b border-white/5 pb-8">
                     <h1 className="text-4xl font-black text-white">Settings</h1>
                     <p className="text-gray-500 mt-2">Manage your notification and privacy preferences</p>
-                </motion.div>
+                </div>
 
                 {/* Section Tabs */}
                 <div className="flex gap-1 p-1 bg-[#161B2B] border border-white/5 rounded-2xl mb-8">

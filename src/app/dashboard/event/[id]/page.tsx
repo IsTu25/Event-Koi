@@ -8,7 +8,7 @@ import {
     Calendar, MapPin, Clock, User, Heart, MessageCircle, Send,
     Share2, Trash2, Edit2, CheckCircle, XCircle, DollarSign,
     Ticket, Image as ImageIcon, Briefcase, Plus, Loader, ArrowLeft,
-    Megaphone, ThumbsUp, MessageSquare, BarChart3, X, Star, Tag
+    Megaphone, ThumbsUp, MessageSquare, BarChart3, X, Star, Tag, Shield
 } from 'lucide-react';
 
 export default function EventDetails() {
@@ -20,9 +20,11 @@ export default function EventDetails() {
     const [event, setEvent] = useState<any>(null);
     const [ticketTypes, setTicketTypes] = useState<any[]>([]);
     const [sponsors, setSponsors] = useState<any[]>([]);
+    const [selectedTiers, setSelectedTiers] = useState<{ [key: string]: string }>({});
     const [waitlistItems, setWaitlistItems] = useState<any[]>([]);
     const [eventTags, setEventTags] = useState<any[]>([]);
     const [eventReviews, setEventReviews] = useState<any[]>([]);
+    const [eventRevenue, setEventRevenue] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
     // Ticket Creation State
@@ -45,6 +47,10 @@ export default function EventDetails() {
     const [showAnalytics, setShowAnalytics] = useState(false);
     const [analyticsData, setAnalyticsData] = useState<any>(null);
     const [analyticsLoading, setAnalyticsLoading] = useState(false);
+
+    // Review Form State
+    const [newReview, setNewReview] = useState({ rating: 5, title: '', content: '' });
+    const [reviewSubmitting, setReviewSubmitting] = useState(false);
 
     useEffect(() => {
         const storedUser = localStorage.getItem('user');
@@ -87,13 +93,14 @@ export default function EventDetails() {
         if (!u?.id) return;
 
         try {
-            const [eventRes, ticketsRes, sponsorsRes, waitlistRes, tagsRes, reviewsRes] = await Promise.all([
+            const [eventRes, ticketsRes, sponsorsRes, waitlistRes, tagsRes, reviewsRes, revenueRes] = await Promise.all([
                 fetch(`/api/events/${eventId}`),
                 fetch(`/api/ticket-types?event_id=${eventId}`),
                 fetch(`/api/sponsors?event_id=${eventId}`),
                 fetch(`/api/event-waitlist?user_id=${u.id}&event_id=${eventId}`),
                 fetch(`/api/event-tags?event_id=${eventId}`),
-                fetch(`/api/event-reviews?event_id=${eventId}`)
+                fetch(`/api/event-reviews?event_id=${eventId}`),
+                fetch(`/api/event-revenue?event_id=${eventId}`)
             ]);
 
             if (eventRes.ok) setEvent(await eventRes.json());
@@ -102,6 +109,7 @@ export default function EventDetails() {
             if (waitlistRes.ok) setWaitlistItems(await waitlistRes.json());
             if (tagsRes.ok) setEventTags(await tagsRes.json());
             if (reviewsRes.ok) setEventReviews(await reviewsRes.json());
+            if (revenueRes.ok) setEventRevenue(await revenueRes.json());
         } catch (error) {
             console.error('Error fetching data:', error);
         } finally {
@@ -180,6 +188,9 @@ export default function EventDetails() {
         data.append('name', newSponsor.name);
         data.append('contribution_amount', newSponsor.contribution);
         data.append('tier', newSponsor.tier);
+        if (isOrganizer) {
+            data.append('status', 'APPROVED');
+        }
         if (newSponsor.logo) data.append('logo', newSponsor.logo);
 
         try {
@@ -189,6 +200,37 @@ export default function EventDetails() {
                 fetchData(id as string);
             }
         } catch (e) { console.error(e); } finally { setSponsorLoading(false); }
+    };
+
+    const handlePostReview = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setReviewSubmitting(true);
+        try {
+            const res = await fetch('/api/event-reviews', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    event_id: id,
+                    user_id: user.id,
+                    rating: newReview.rating,
+                    title: newReview.title,
+                    content: newReview.content
+                })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setNewReview({ rating: 5, title: '', content: '' });
+                fetchData(id as string);
+                alert("Review submitted!");
+            } else {
+                alert(data.error || "Failed to post review.");
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Error posting review.");
+        } finally {
+            setReviewSubmitting(false);
+        }
     };
 
     if (loading || !user) {
@@ -311,7 +353,9 @@ export default function EventDetails() {
                             <div className="flex flex-col items-end gap-4 min-w-[200px]">
                                 <div className="p-4 rounded-2xl bg-[#0B0F1A] border border-white/10 text-center w-full">
                                     <span className="text-xs text-gray-500 uppercase tracking-widest block mb-1">Total Sales</span>
-                                    <span className="text-2xl font-bold text-white">৳{sponsors.reduce((acc, s) => acc + (parseFloat(s.contribution_amount) || 0), 0) + ticketTypes.reduce((acc, t) => acc + (parseFloat(t.price) * 0), 0) /* Placeholder calc */}</span>
+                                    <span className="text-2xl font-bold text-white">
+                                        ৳{(Number(eventRevenue?.ticket_revenue || 0) + Number(eventRevenue?.sponsor_revenue || 0)).toLocaleString()}
+                                    </span>
                                 </div>
                                 <div className="flex gap-2 w-full">
                                     <button
@@ -413,6 +457,48 @@ export default function EventDetails() {
                                 <span className="p-2 rounded-lg bg-orange-500/10 text-orange-400"><Star size={20} /></span>
                                 Attendee Reviews
                             </h3>
+
+                            {/* Write Review Form - Only for Attendees */}
+                            {!isOrganizer && (
+                                <form onSubmit={handlePostReview} className="mb-8 p-6 rounded-2xl bg-[#0B0F1A] border border-white/5 space-y-4">
+                                    <h4 className="font-bold text-white text-sm">Write a Review</h4>
+                                    <div className="flex gap-2">
+                                        {[1, 2, 3, 4, 5].map((star) => (
+                                            <button
+                                                key={star}
+                                                type="button"
+                                                onClick={() => setNewReview({ ...newReview, rating: star })}
+                                                className="focus:outline-none"
+                                            >
+                                                <Star size={24} className={star <= newReview.rating ? "fill-amber-500 text-amber-500 transition-colors" : "text-gray-600 transition-colors"} />
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <input
+                                        className="w-full bg-[#161B2B] border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-amber-500/50 outline-none placeholder-gray-500"
+                                        placeholder="Review Title (e.g. Amazing Experience!)"
+                                        value={newReview.title}
+                                        onChange={e => setNewReview({ ...newReview, title: e.target.value })}
+                                        required
+                                    />
+                                    <textarea
+                                        className="w-full bg-[#161B2B] border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-amber-500/50 outline-none placeholder-gray-500 min-h-[100px] resize-none"
+                                        placeholder="Share your thoughts about this event..."
+                                        value={newReview.content}
+                                        onChange={e => setNewReview({ ...newReview, content: e.target.value })}
+                                        required
+                                    />
+                                    <div className="flex justify-end">
+                                        <button
+                                            disabled={reviewSubmitting}
+                                            className="px-6 py-2.5 bg-amber-600 hover:bg-amber-500 text-white rounded-xl font-bold text-sm transition-colors disabled:opacity-50"
+                                        >
+                                            {reviewSubmitting ? 'Submitting...' : 'Post Review'}
+                                        </button>
+                                    </div>
+                                </form>
+                            )}
+
                             {eventReviews.length === 0 ? (
                                 <div className="text-center py-8 bg-[#0B0F1A] rounded-xl border border-white/5 border-dashed">
                                     <p className="text-gray-500 text-sm">No reviews yet. Be the first!</p>
@@ -563,27 +649,48 @@ export default function EventDetails() {
                                             <h5 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Pending Requests</h5>
                                             <div className="space-y-3">
                                                 {sponsors.filter(s => s.status === 'PENDING').map(s => (
-                                                    <div key={s.sponsor_id} className="p-3 rounded-xl bg-[#0B0F1A] border border-white/5">
-                                                        <div className="flex justify-between items-start mb-2">
-                                                            <span className="text-sm font-bold text-white">{s.name}</span>
-                                                            <span className="text-xs text-amber-500">{s.tier}</span>
+                                                    <div key={s.sponsor_id} className="p-4 rounded-xl bg-[#0B0F1A] border border-white/5 space-y-3">
+                                                        <div className="flex justify-between items-start">
+                                                            <div>
+                                                                <span className="text-sm font-bold text-white block">{s.name}</span>
+                                                                <span className="text-[10px] text-gray-500">Requested for ৳{s.contribution_amount}</span>
+                                                            </div>
+                                                            <div className="flex flex-col items-end">
+                                                                <label className="text-[9px] font-bold text-gray-600 uppercase mb-1">Assign Tier</label>
+                                                                <select
+                                                                    className="bg-[#161B2B] border border-white/10 rounded-lg px-2 py-1 text-[10px] text-white outline-none focus:border-cyan-500/50"
+                                                                    value={selectedTiers[s.sponsor_id] || s.tier}
+                                                                    onChange={(e) => setSelectedTiers({ ...selectedTiers, [s.sponsor_id]: e.target.value })}
+                                                                >
+                                                                    <option>Partner</option>
+                                                                    <option>Bronze</option>
+                                                                    <option>Silver</option>
+                                                                    <option>Gold</option>
+                                                                    <option>Platinum</option>
+                                                                </select>
+                                                            </div>
                                                         </div>
                                                         <div className="flex gap-2">
                                                             <button
                                                                 onClick={async () => {
-                                                                    await fetch('/api/sponsors', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sponsor_id: s.sponsor_id, status: 'APPROVED' }) });
+                                                                    const tier = selectedTiers[s.sponsor_id] || s.tier;
+                                                                    await fetch('/api/sponsors', {
+                                                                        method: 'PUT',
+                                                                        headers: { 'Content-Type': 'application/json' },
+                                                                        body: JSON.stringify({ sponsor_id: s.sponsor_id, status: 'APPROVED', tier: tier })
+                                                                    });
                                                                     fetchData(id as string);
                                                                 }}
-                                                                className="flex-1 py-1.5 bg-green-500/20 text-green-400 text-xs font-bold rounded-lg hover:bg-green-500/30"
+                                                                className="flex-1 py-1.5 bg-green-500/20 text-green-400 text-xs font-bold rounded-lg hover:bg-green-500/30 transition-all"
                                                             >
-                                                                Approve
+                                                                Approve as {selectedTiers[s.sponsor_id] || s.tier}
                                                             </button>
                                                             <button
                                                                 onClick={async () => {
                                                                     await fetch('/api/sponsors', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sponsor_id: s.sponsor_id, status: 'REJECTED' }) });
                                                                     fetchData(id as string);
                                                                 }}
-                                                                className="flex-1 py-1.5 bg-red-500/20 text-red-400 text-xs font-bold rounded-lg hover:bg-red-500/30"
+                                                                className="flex-1 py-1.5 bg-red-500/20 text-red-400 text-xs font-bold rounded-lg hover:bg-red-500/30 transition-all"
                                                             >
                                                                 Reject
                                                             </button>
@@ -690,18 +797,26 @@ export default function EventDetails() {
                                                 <h4 className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-2">Total Page Views</h4>
                                                 <p className="text-3xl font-black text-white">{analyticsData.totalViews > 0 ? analyticsData.totalViews.toLocaleString() : (analyticsData.timeline?.reduce((a: any, c: any) => a + c.total_views, 0).toLocaleString() || 0)}</p>
                                             </div>
-                                            <div className="bg-[#0B0F1A] border border-white/5 rounded-2xl p-6 relative overflow-hidden">
+                                            <div className="bg-[#161B2B] p-6 rounded-2xl border border-white/5">
                                                 <h4 className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-2">Ticket Revenue</h4>
-                                                <p className="text-3xl font-black text-green-400">৳{Number(analyticsData.finances?.total_ticket_revenue || 0).toLocaleString()}</p>
+                                                <p className="text-3xl font-black text-emerald-400">৳{Number(analyticsData.finances?.total_ticket_revenue || 0).toLocaleString()}</p>
                                             </div>
-                                            <div className="bg-[#0B0F1A] border border-white/5 rounded-2xl p-6 relative overflow-hidden">
+                                            <div className="bg-[#161B2B] p-6 rounded-2xl border border-white/5">
                                                 <h4 className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-2">Sponsorships</h4>
                                                 <p className="text-3xl font-black text-amber-400">৳{Number(analyticsData.finances?.total_sponsorship_revenue || 0).toLocaleString()}</p>
                                             </div>
-                                            <div className="bg-[#0B0F1A] border border-white/5 rounded-2xl p-6 relative overflow-hidden">
-                                                <h4 className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-2">Est. Payout</h4>
-                                                <p className="text-3xl font-black text-cyan-400">৳{Number(analyticsData.finances?.organizer_payout || 0).toLocaleString()}</p>
+                                            <div className="bg-[#161B2B] p-6 rounded-2xl border border-white/5">
+                                                <h4 className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-2">Platform Fees</h4>
+                                                <p className="text-3xl font-black text-rose-400">-৳{Number(analyticsData.finances?.platform_fee || 0).toLocaleString()}</p>
                                             </div>
+                                        </div>
+
+                                        <div className="bg-gradient-to-r from-cyan-600/20 to-blue-600/20 p-8 rounded-3xl border border-cyan-500/30 mb-8 relative overflow-hidden group">
+                                            <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform">
+                                                <Shield size={80} className="text-cyan-500" />
+                                            </div>
+                                            <h4 className="text-xs text-cyan-400 font-bold uppercase tracking-widest mb-2">Net revenue (Your Payout)</h4>
+                                            <p className="text-5xl font-black text-white">৳{Number(analyticsData.finances?.net_revenue || 0).toLocaleString()}</p>
                                         </div>
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

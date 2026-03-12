@@ -9,6 +9,7 @@ import {
     MessageCircle, Search, UserPlus, X, Send, Clock,
     Calendar, MapPin, ChevronRight, Users, Loader, Check
 } from 'lucide-react';
+import { DashboardNavbar } from '@/components/dashboard-navbar';
 
 export default function ProfilePage() {
     const router = useRouter();
@@ -153,30 +154,18 @@ export default function ProfilePage() {
 
             <div className="relative z-10 max-w-7xl mx-auto p-6 lg:p-10">
                 {/* Header */}
-                <motion.header
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mb-10"
-                >
-                    <Link
-                        href="/dashboard"
-                        className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-6 group"
-                    >
-                        <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-                        Back to Dashboard
-                    </Link>
+                <DashboardNavbar user={user} />
 
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-white/5 pb-8">
-                        <div>
-                            <h1 className="text-4xl font-black tracking-tight mb-2">My <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">Profile</span></h1>
-                            <p className="text-gray-400">Manage your persona and verification status.</p>
-                        </div>
-                        <div className="flex gap-4">
-                            <StatBadge count={user?.events_organized || 0} label="Organized" />
-                            <StatBadge count={user?.events_attended || 0} label="Attended" />
-                        </div>
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-white/5 pb-8 mb-10">
+                    <div>
+                        <h1 className="text-4xl font-black tracking-tight mb-2">My <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">Profile</span></h1>
+                        <p className="text-gray-400">Manage your persona and verification status.</p>
                     </div>
-                </motion.header>
+                    <div className="flex gap-4">
+                        <StatBadge count={user?.events_organized || 0} label="Organized" />
+                        <StatBadge count={user?.events_attended || 0} label="Attended" />
+                    </div>
+                </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Left Column: Profile Card */}

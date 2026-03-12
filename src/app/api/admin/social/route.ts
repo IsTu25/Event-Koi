@@ -4,13 +4,17 @@ import pool from '@/lib/db';
 // GET /api/admin/social — view relationship and communication activity
 export async function GET() {
     try {
-        // TOP followed users
+        // TOP Influencers based on Friendships
         const [influencers] = await pool.query(`
-            SELECT u.name, u.email, COUNT(uf.follower_user_id) AS follower_count
-            FROM UserFollowing uf
-            JOIN Users u ON uf.following_user_id = u.id
-            GROUP BY uf.following_user_id
-            ORDER BY follower_count DESC
+            SELECT u.name, u.email, COUNT(f.friend_id) AS friend_count
+            FROM (
+                SELECT user_id, friend_id FROM Friendships WHERE status = 'ACCEPTED'
+                UNION
+                SELECT friend_id, user_id FROM Friendships WHERE status = 'ACCEPTED'
+            ) f
+            JOIN Users u ON f.user_id = u.id
+            GROUP BY u.id
+            ORDER BY friend_count DESC
             LIMIT 20
         `);
 
@@ -23,15 +27,6 @@ export async function GET() {
             ORDER BY date DESC
         `);
 
-        // Recent achievements
-        const [achievements] = await pool.query(`
-            SELECT ua.*, u.name AS user_name
-            FROM UserAchievements ua
-            JOIN Users u ON ua.user_id = u.id
-            ORDER BY ua.earned_date DESC
-            LIMIT 50
-        `);
-
         // Friendships
         const [friendships] = await pool.query(`
             SELECT f.*, u1.name AS user1_name, u2.name AS user2_name
@@ -42,7 +37,7 @@ export async function GET() {
             LIMIT 50
         `);
 
-        return NextResponse.json({ influencers, messaging, achievements, friendships });
+        return NextResponse.json({ influencers, messaging, friendships });
     } catch (error) {
         console.error('Admin Social GET error:', error);
         return NextResponse.json({ error: 'Failed' }, { status: 500 });

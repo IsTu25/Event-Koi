@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
+import { DashboardNavbar } from '@/components/dashboard-navbar';
 import {
     Calendar, MapPin, Clock, ArrowLeft, Download, XCircle,
     QrCode, Ticket as TicketIcon, AlertCircle, CheckCircle, Loader
@@ -21,8 +23,9 @@ export default function MyTickets() {
             return;
         }
         const parsed = JSON.parse(storedUser);
-        setUser(parsed);
-        fetchTickets(parsed.id || parsed.userId || parsed.insertId);
+        const normalizedUser = { ...parsed, id: parsed.id || parsed.userId || parsed.insertId };
+        setUser(normalizedUser);
+        fetchTickets(normalizedUser.id);
     }, [router]);
 
     const fetchTickets = async (userId: string) => {
@@ -121,29 +124,17 @@ export default function MyTickets() {
             </div>
 
             <div className="relative z-10 max-w-7xl mx-auto p-6 lg:p-10">
-                <motion.header
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mb-12"
-                >
-                    <button
-                        onClick={() => router.push('/dashboard')}
-                        className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-6 group"
-                    >
-                        <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-                        Back to Dashboard
-                    </button>
+                <DashboardNavbar user={user} />
 
-                    <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center text-3xl shadow-lg shadow-pink-500/20">
-                            🎟️
-                        </div>
-                        <div>
-                            <h1 className="text-4xl font-black text-white tracking-tight">My <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-500">Tickets</span></h1>
-                            <p className="text-gray-400 mt-1">Access and manage your event passes.</p>
-                        </div>
+                <div className="flex items-center gap-4 mb-12">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center text-3xl shadow-lg shadow-pink-500/20">
+                        🎟️
                     </div>
-                </motion.header>
+                    <div>
+                        <h1 className="text-4xl font-black text-white tracking-tight">My <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-500">Tickets</span></h1>
+                        <p className="text-gray-400 mt-1">Access and manage your event passes.</p>
+                    </div>
+                </div>
 
                 {tickets.length === 0 ? (
                     <div className="text-center py-20 bg-[#161B2B] rounded-3xl border border-white/5 border-dashed">
@@ -158,7 +149,7 @@ export default function MyTickets() {
                     <div className="space-y-8">
                         {tickets.map((t) => (
                             <motion.div
-                                key={t.ticket_id}
+                                key={t.ticket_id || t.booking_id}
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 className="group relative"

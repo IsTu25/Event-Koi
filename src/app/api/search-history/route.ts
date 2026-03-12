@@ -1,6 +1,26 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 
+// POST /api/search-history — record a new search
+export async function POST(request: Request) {
+    try {
+        const body = await request.json();
+        const { user_id, search_query, search_type, results_count } = body;
+
+        if (!search_query) return NextResponse.json({ error: 'search_query required' }, { status: 400 });
+
+        await pool.execute(`
+            INSERT INTO SearchHistory (user_id, search_query, search_type, results_count)
+            VALUES (?, ?, ?, ?)
+        `, [user_id || null, search_query, search_type || 'Event', results_count || 0]);
+
+        return NextResponse.json({ message: 'Search recorded' });
+    } catch (error) {
+        console.error('SearchHistory POST error:', error);
+        return NextResponse.json({ error: 'Failed to record search' }, { status: 500 });
+    }
+}
+
 // GET /api/search-history?user_id=X
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);

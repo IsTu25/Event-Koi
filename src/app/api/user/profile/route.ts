@@ -86,7 +86,7 @@ export async function GET(request: Request) {
                 u.profile_image, u.designation, u.is_verified, 
                 u.organization_id_card, u.proof_document,
                 (SELECT COUNT(*) FROM Events WHERE organizer_id = u.id) as events_organized,
-                (SELECT COUNT(DISTINCT event_id) FROM Bookings WHERE user_id = u.id AND status = 'VALID') as events_attended
+                (SELECT COUNT(*) FROM Tickets WHERE user_id = u.id AND status != 'CANCELLED') as tickets_purchased
             FROM Users u 
             WHERE u.id = ?
         `, [userId]);

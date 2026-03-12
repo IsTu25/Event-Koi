@@ -123,8 +123,11 @@ export default function EmailCampaigns() {
                         </div>
 
                         <div className="bg-[#161B2B] border border-white/5 rounded-3xl p-6 relative overflow-hidden">
-                            <h3 className="text-gray-500 text-xs font-bold uppercase tracking-widest mb-4">Avg. Open Rate</h3>
-                            <p className="text-4xl font-black text-orange-400">{avgOpen.toFixed(1)}%</p>
+                            <h3 className="text-gray-500 text-xs font-bold uppercase tracking-widest mb-4">Campaign Status</h3>
+                            <div className="flex items-center gap-2 text-2xl font-black text-white">
+                                <CheckCircle size={20} className="text-green-500" />
+                                {campaigns.filter(c => c.status === 'SENT').length} Sent
+                            </div>
                         </div>
                     </div>
 
@@ -159,10 +162,6 @@ export default function EmailCampaigns() {
                                                     <div className="flex items-center gap-2">
                                                         <Mail size={16} className="text-gray-500" />
                                                         <div className="text-sm"><span className="font-bold text-white">{c.total_sent}</span> <span className="text-xs text-gray-500">Sent</span></div>
-                                                    </div>
-                                                    <div className="flex items-center gap-2">
-                                                        <BarChart2 size={16} className="text-orange-500" />
-                                                        <div className="text-sm"><span className="font-bold text-orange-400">{c.total_sent > 0 ? ((c.opened / c.total_sent) * 100).toFixed(0) : 0}%</span> <span className="text-xs text-gray-500">Opened</span></div>
                                                     </div>
                                                 </div>
                                             )}
@@ -212,6 +211,7 @@ export default function EmailCampaigns() {
                                     <div>
                                         <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Audience</label>
                                         <select required className="w-full bg-[#0B0F1A] border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-pink-500/50 outline-none appearance-none" value={formData.target_audience} onChange={e => setFormData({ ...formData, target_audience: e.target.value })}>
+                                            <option value="EVERYBODY">Everybody (Platform)</option>
                                             <option value="ALL_ATTENDEES">All Past Attendees</option>
                                             <option value="WAITLIST">Waitlist Users</option>
                                             <option value="FOLLOWERS">My Followers</option>

@@ -12,14 +12,14 @@ export async function GET(request: Request) {
             SELECT rc.*, u.name AS reporter_name, u.email AS reporter_email,
                    admin.name AS reviewed_by_name
             FROM ReportedContent rc
-            JOIN Users u ON rc.reporter_id = u.id
-            LEFT JOIN Users admin ON rc.reviewed_by = admin.id
+            JOIN Users u ON rc.reported_by_user_id = u.id
+            LEFT JOIN Users admin ON rc.assigned_to_admin = admin.id
             WHERE 1=1
         `;
         const params: any[] = [];
-        if (reporterId) { query += ' AND rc.reporter_id = ?'; params.push(reporterId); }
+        if (reporterId) { query += ' AND rc.reported_by_user_id = ?'; params.push(reporterId); }
         if (status) { query += ' AND rc.status = ?'; params.push(status); }
-        query += ' ORDER BY rc.created_at DESC LIMIT 200';
+        query += ' ORDER BY rc.reported_date DESC LIMIT 200';
 
         const [rows] = await pool.query(query, params);
         return NextResponse.json(rows);
@@ -65,12 +65,12 @@ export async function PUT(request: Request) {
 
         await pool.execute(`
             UPDATE ReportedContent
-            SET status = ?, reviewed_by = ?, reviewed_at = NOW(), resolution_note = ?
+            SET status = ?, assigned_to_admin = ?, resolved_date = NOW(), resolution_notes = ?
             WHERE report_id = ?
         `, [status, admin_id, resolution_note || null, report_id]);
 
         await pool.execute(
-            'INSERT INTO AdminAuditLog (admin_id, action, entity_type, entity_id, notes) VALUES (?, ?, ?, ?, ?)',
+            'INSERT INTO AdminAuditLog (admin_user_id, action_type, entity_type, entity_id, description) VALUES (?, ?, ?, ?, ?)',
             [admin_id, `REPORT_${status}`, 'ReportedContent', report_id, resolution_note || null]
         );
 

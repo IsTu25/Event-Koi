@@ -35,8 +35,9 @@ export async function GET(request: Request) {
             } catch { return 0; }
         };
 
-        const [total_net_revenue, recent_revenue, pending_refunds,
-            pending_role_requests, open_reports, active_moderations, total_platform_fees] = await Promise.all([
+        const [organizer_payout_pool, recent_revenue, pending_refunds,
+            pending_role_requests, open_reports, active_moderations,
+            organizing_revenue, ticket_commission, total_tickets_sold] = await Promise.all([
                 safeCount('SELECT COALESCE(SUM(net_revenue),0) AS val FROM EventRevenue'),
                 safeCount(
                     'SELECT COALESCE(SUM(net_revenue),0) AS val FROM EventRevenue WHERE last_calculated_at > DATE_SUB(NOW(), INTERVAL ? DAY)',
@@ -46,19 +47,30 @@ export async function GET(request: Request) {
                 safeCount("SELECT COUNT(*) AS val FROM RoleRequests WHERE status = 'PENDING'"),
                 safeCount("SELECT COUNT(*) AS val FROM ReportedContent WHERE status = 'PENDING'"),
                 safeCount('SELECT COUNT(*) AS val FROM UserModeration WHERE is_active = TRUE'),
-                safeCount('SELECT COALESCE(SUM(total_fees),0) AS val FROM PlatformFees'),
+                // 1k per event created (Organizing Revenue)
+                safeCount('SELECT (COUNT(*) * 1000) AS val FROM Events'),
+                // 10% of all ticket sales (Ticket Commission)
+                safeCount(`
+                    SELECT COALESCE(SUM(p.amount * 0.10), 0) AS val 
+                    FROM Payments p
+                    WHERE p.payment_status = 'COMPLETED' AND p.payment_type = 'TICKET'
+                `),
+                // Count of all non-cancelled tickets sold
+                safeCount("SELECT COUNT(*) AS val FROM Bookings WHERE status != 'CANCELLED'"),
             ]);
 
         const coreSummary = (summaryCore as any[])[0];
         const summary = {
             ...coreSummary,
-            total_net_revenue,
+            total_net_revenue: organizing_revenue + ticket_commission,
+            organizing_revenue,
+            ticket_commission,
+            total_tickets_sold,
             recent_revenue,
             pending_refunds,
             pending_role_requests,
             open_reports,
             active_moderations,
-            total_platform_fees,
         };
 
         // ── Daily user growth ─────────────────────────────────────────────────

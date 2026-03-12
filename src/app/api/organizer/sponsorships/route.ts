@@ -29,7 +29,16 @@ export async function GET(request: Request) {
             ORDER BY es.created_at DESC
         `, [organizerId]);
 
-        return NextResponse.json({ packages, sponsorships });
+        // 3. Pending Sponsor applications (directly on events)
+        const [pendingSponsors] = await pool.query(`
+            SELECT s.*, e.title as event_title
+            FROM Sponsors s
+            JOIN Events e ON s.event_id = e.event_id
+            WHERE e.organizer_id = ? AND s.status = 'PENDING'
+            ORDER BY s.created_at DESC
+        `, [organizerId]);
+
+        return NextResponse.json({ packages, sponsorships, pendingSponsors });
     } catch (error) {
         console.error('Organizer Sponsorship GET error:', error);
         return NextResponse.json({ error: 'Failed' }, { status: 500 });

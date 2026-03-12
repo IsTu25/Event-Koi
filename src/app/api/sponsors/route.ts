@@ -81,13 +81,17 @@ export async function GET(request: Request) {
 
 export async function PUT(request: Request) {
     try {
-        const { sponsor_id, status } = await request.json();
+        const { sponsor_id, status, tier } = await request.json();
 
         if (!sponsor_id || !status) {
             return NextResponse.json({ message: 'Missing fields' }, { status: 400 });
         }
 
-        await pool.execute('UPDATE Sponsors SET status = ? WHERE sponsor_id = ?', [status, sponsor_id]);
+        if (tier) {
+            await pool.execute('UPDATE Sponsors SET status = ?, tier = ? WHERE sponsor_id = ?', [status, tier, sponsor_id]);
+        } else {
+            await pool.execute('UPDATE Sponsors SET status = ? WHERE sponsor_id = ?', [status, sponsor_id]);
+        }
         return NextResponse.json({ message: 'Sponsor updated' });
     } catch (error) {
         return NextResponse.json({ error: 'Update failed' }, { status: 500 });
